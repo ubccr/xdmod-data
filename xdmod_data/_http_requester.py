@@ -229,7 +229,7 @@ class _HttpRequester:
     def __request_json_web_token(self):
         jupyterhub_api_token = os.getenv('JUPYTERHUB_API_TOKEN')
         jupyterhub_jwt_url = os.getenv('JUPYTERHUB_JWT_URL')
-        if not (jupyterhub_api_token or jupyterhub_jwt_url):
+        if not jupyterhub_api_token or not jupyterhub_jwt_url:
             raise RuntimeError(
                 'Error: External authentication mechanism not configured.',
             )
