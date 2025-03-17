@@ -132,8 +132,7 @@ class _HttpRequester:
                 token = self.__request_json_web_token()
             except RuntimeError as e:
                 raise RuntimeError(
-                    token_error_msg
-                    + e
+                    token_error_msg + str(e),
                 ) from None
         headers = {
             **self.__headers,
@@ -145,13 +144,13 @@ class _HttpRequester:
             post_fields['Bearer'] = token
             response = self.__requests_session.post(
                 url,
-                headers=self.__headers,
+                headers=headers,
                 data=post_fields,
             )
         else:
             url += '&' if '?' in url else '?'
             url += 'Bearer=' + token
-            response = self.__requests_session.get(url, headers=self.__headers)
+            response = self.__requests_session.get(url, headers=headers)
         if response.status_code != 200:
             msg = ''
             try:
@@ -228,31 +227,31 @@ class _HttpRequester:
         print(progress_msg, end=end)
 
     def __request_json_web_token(self):
-        jupyterhub_api_token = os.getenv("JUPYTERHUB_API_TOKEN")
-        jupyterhub_jwt_url = os.getenv("JUPYTERHUB_JWT_URL")
+        jupyterhub_api_token = os.getenv('JUPYTERHUB_API_TOKEN')
+        jupyterhub_jwt_url = os.getenv('JUPYTERHUB_JWT_URL')
         if not (jupyterhub_api_token or jupyterhub_jwt_url):
             raise RuntimeError(
-                'Error: External authentication mechanism not configured.'
+                'Error: External authentication mechanism not configured.',
             )
         try:
             headers = {
                 **self.__headers,
-                'Authorization': 'Bearer ' +  jupyterhub_api_token
+                'Authorization': 'Bearer ' + jupyterhub_api_token,
             }
             r = requests.get(
                 jupyterhub_jwt_url,
-                headers=headers
+                headers=headers,
             )
             r.raise_for_status()
         except requests.exceptions.RequestException as e:
             raise RuntimeError(
-                'Error while obtaining authentication token: ' + e
+                'Error while obtaining authentication token: ' + str(e),
             )
         try:
             response_json = r.json()
         except requests.exceptions.JSONDecode as e:
             raise RuntimeError(
-                'Error decoding response: ' + e
+                'Error decoding response: ' + str(e),
             )
 
-        return response_json["token"]
+        return response_json['token']
