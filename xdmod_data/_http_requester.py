@@ -142,7 +142,7 @@ class _HttpRequester:
             },
         }
         if post_fields:
-            post_fields['Bearer'] = self.__api_token
+            post_fields['Bearer'] = token
             response = self.__requests_session.post(
                 url,
                 headers=self.__headers,
@@ -150,7 +150,7 @@ class _HttpRequester:
             )
         else:
             url += '&' if '?' in url else '?'
-            url += 'Bearer=' + self.__api_token
+            url += 'Bearer=' + token
             response = self.__requests_session.get(url, headers=self.__headers)
         if response.status_code != 200:
             msg = ''
@@ -227,7 +227,7 @@ class _HttpRequester:
         )
         print(progress_msg, end=end)
 
-    def __request_json_web_token():
+    def __request_json_web_token(self):
         jupyterhub_api_token = os.getenv("JUPYTERHUB_API_TOKEN")
         jupyterhub_jwt_url = os.getenv("JUPYTERHUB_JWT_URL")
         if not (jupyterhub_api_token or jupyterhub_jwt_url):
