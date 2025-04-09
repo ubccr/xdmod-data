@@ -94,15 +94,12 @@ class _HttpRequester:
         _validator._assert_runtime_context(self.__in_runtime_context)
         url = self.__xdmod_host + path
         if post_fields:
-            post_fields['Bearer'] = self.__api_token
             response = self.__requests_session.post(
                 url,
                 headers=self.__headers,
                 data=post_fields,
             )
         else:
-            url += '&' if '?' in url else '?'
-            url += 'Bearer=' + self.__api_token
             response = self.__requests_session.get(url, headers=self.__headers)
         if response.status_code != 200:
             msg = ''
