@@ -20,7 +20,6 @@
 - [ ] Refactoring / documentation update (non-breaking change which does not change functionality)
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
-- [ ] Deprecation (non-breaking change that removes functionality)
 - [ ] Breaking change (fix, feature, or deprecation that would cause existing functionality to change)
 - [ ] Release preparation
 
