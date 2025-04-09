@@ -43,47 +43,26 @@ class _HttpRequester:
 
     def _request_raw_data(self, params):
         url_params = self.__get_raw_data_url_params(params)
-        # Once XDMoD 10.5 is no longer supported, there will be no need to call
-        # __get_raw_data_limit(), and the if/else statement below will not be
-        # necessary — only the body of the 'if' branch will be needed.
-        limit = self.__get_raw_data_limit()
         data = []
-        if limit == 'NA':
-            response_iter_lines = self.__request(
-                path='/rest/v1/warehouse/raw-data?' + url_params,
-                post_fields=None,
-                stream=True,
-            )
-            i = 0
-            for line in response_iter_lines:
-                line_text = line.decode('utf-8').replace('\x1e', '')
-                line_json = json.loads(line_text)
-                if i == 0:
-                    response = {'fields': line_json}
-                else:
-                    data.append(line_json)
-                    # Only print every 10,000 rows to avoid I/O rate errors.
-                    if params['show_progress'] and i % 10000 == 0:
-                        self.__print_progress_msg(i, '\r')
-                i += 1
-            if params['show_progress']:
-                self.__print_progress_msg(i, 'DONE\n')
-        else:
-            num_rows = limit
-            offset = 0
-            while num_rows == limit:
-                response = self._request_json(
-                    path='/rest/v1/warehouse/raw-data?' + url_params
-                    + '&offset=' + str(offset),
-                )
-                partial_data = response['data']
-                data += partial_data
-                if params['show_progress']:
-                    self.__print_progress_msg(len(data), '\r')
-                num_rows = len(partial_data)
-                offset += limit
-            if params['show_progress']:
-                self.__print_progress_msg(len(data), 'DONE\n')
+        response_iter_lines = self.__request(
+            path='/rest/v1/warehouse/raw-data?' + url_params,
+            post_fields=None,
+            stream=True,
+        )
+        i = 0
+        for line in response_iter_lines:
+            line_text = line.decode('utf-8').replace('\x1e', '')
+            line_json = json.loads(line_text)
+            if i == 0:
+                response = {'fields': line_json}
+            else:
+                data.append(line_json)
+                # Only print every 10,000 rows to avoid I/O rate errors.
+                if params['show_progress'] and i % 10000 == 0:
+                    self.__print_progress_msg(i, '\r')
+            i += 1
+        if params['show_progress']:
+            self.__print_progress_msg(i, 'DONE\n')
         return (data, response['fields'])
 
     def _request_filter_values(self, realm_id, dimension_id):
@@ -173,22 +152,6 @@ class _HttpRequester:
                     params['filters'][dimension],
                 )
         return urlencode(results)
-
-    # Once XDMoD 10.5 is no longer supported,
-    # there will be no need for this method.
-    def __get_raw_data_limit(self):
-        if self.__raw_data_limit is None:
-            try:
-                response = self._request_json(
-                    '/rest/v1/warehouse/raw-data/limit',
-                )
-                self.__raw_data_limit = int(response['data'])
-            except RuntimeError as e:
-                if '404' in str(e):
-                    self.__raw_data_limit = 'NA'
-                else:  # pragma: no cover
-                    raise
-        return self.__raw_data_limit
 
     def __print_progress_msg(self, num_rows, end='\n'):
         progress_msg = (
