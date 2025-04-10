@@ -128,18 +128,18 @@ git+https://github.com/username/xdmod-data.git@branch-name
                the main development branch's link text to the next major
                version (e.g., `v3.x.y (main development branch)`).
     1. Get the PR approved and merged.
-1. Go to the [GitHub
-   milestones](https://github.com/ubccr/xdmod-data/milestones) and add a
-   milestone for the new version under development.
-1. Create a release prep draft PR for the new version under development (this
-   may be multiple PRs for multiple new versions under development):
-    1. In `CHANGELOG.md`:
-        1. Add a heading for the new version under development with a date of
-           `XXXX-XX-XX`.
-        1. If you already know what will be done in the new version under
-           development, write a summary of it.
-        1. Add the expected compatibility with Open XDMoD versions.
-    1. In `README.md`, add the new version under development to the Open XDMoD
-       compatibility matrix.
-    1. In `xdmod_data/__version__.py`, change the version number to the new
-       version under development.
+1. For each new version under development:
+    1. Go to the [GitHub
+       milestones](https://github.com/ubccr/xdmod-data/milestones) and add a
+       milestone for the new version under development.
+    1. Create a release prep draft PR for the new version under development:
+        1. In `CHANGELOG.md`:
+            1. Add a heading for the new version under development with a date of
+               `XXXX-XX-XX`.
+            1. If you already know what will be done in the new version under
+               development, write a summary of it.
+            1. Add the expected compatibility with Open XDMoD versions.
+        1. In `README.md`, add the new version under development to the Open XDMoD
+           compatibility matrix.
+        1. In `xdmod_data/__version__.py`, change the version number to the new
+           version under development.
