@@ -28,7 +28,6 @@ XDMoD as indicated in the table below.
 
 | `xdmod-data` version | Open XDMoD versions |
 | -------------------- | ------------------- |
-| 1.1.0                | 11.0.x              |
 | 1.0.3, 1.0.2, 1.0.1  | 11.0.x, 10.5.x      |
 | 1.0.0                | 10.5.x              |
 
