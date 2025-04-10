@@ -29,7 +29,7 @@ git+https://github.com/username/xdmod-data.git@branch-name
 
 ## Releasing a new version
 
-1. In the version's release prep draft PR for `xdmod-data`:
+1. In the version's release prep draft PR:
     1. In `xdmod_data/__version__.py`, make sure the version number is updated.
     1. In `README.md`, make sure the Open XDMoD compatibility matrix is
        updated.
