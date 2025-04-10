@@ -1,5 +1,11 @@
 # xdmod-data Changelog
 
+## v1.1.0 (XXXX-XX-XX)
+
+This release adds support for running the package in a JupyterHub that has a
+service providing JSON Web Tokens for authentication to an Open XDMoD portal
+(currently only ACCESS XDMoD v11.0.1 p? but also planned for Open XDMoD 11.5).
+
 ## v1.0.3 (2025-01-30)
 
 This release fixes a `ValueError` error that occurs with the Plotly
