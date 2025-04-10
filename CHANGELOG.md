@@ -1,5 +1,7 @@
 # xdmod-data Changelog
 
+## v2.0.0 (XXXX-XX-XX)
+
 ## v1.0.3 (2025-01-30)
 
 This release fixes a `ValueError` that occurs with the Plotly `timeseries`
