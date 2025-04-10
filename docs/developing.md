@@ -119,10 +119,14 @@ git+https://github.com/username/xdmod-data.git@branch-name
     1. In `xdmod_data/__version__.py`, make sure the version number is updated
        to a development pre-release of the next version, e.g., `3.0.0.dev01`.
     1. In `README.md`:
-        1. If you just released a new major version, then under the main
-           heading, in the sentence that begins `This documentation is for
-           ...`, update the bold text from e.g., `**v2.x.y (main development
-           branch)**` to, e.g., `the **v2.x.y** versions`.
+        1. If you just released a new major version:
+            1. Under the main heading, in the sentence that begins `This
+               documentation is for ...`, update the bold text from e.g.,
+               `**v2.x.y (main development branch)**` to, e.g., `the **v2.x.y**
+               versions`.
+            1. In the list under `For documentation of other versions:`, update
+               the main development branch's link text to the next major
+               version (e.g., `v3.x.y (main development branch)`).
     1. Get the PR approved and merged.
 1. Go to the [GitHub
    milestones](https://github.com/ubccr/xdmod-data/milestones) and add a
