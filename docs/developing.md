@@ -94,8 +94,7 @@ git+https://github.com/username/xdmod-data.git@branch-name
 ## After release
 
 1. If you just released a new major version (e.g., `2.0.0`),
-    1. Create a branch off `main` for that major version called, e.g.,
-       `v2.x.y`.
+    1. Create a branch off `main` for that major version (e.g., `v2.x.y`).
     1. For each major version below that major version (e.g., `1.x.y`), make a
        PR to that branch that updates `README.md` to add a link to the new
        version's README to the list under `For documentation of other
@@ -118,7 +117,7 @@ git+https://github.com/username/xdmod-data.git@branch-name
         1. Get the PR approved and merged.
 1. In a PR to the same branch you just released:
     1. In `xdmod_data/__version__.py`, make sure the version number is updated
-       to a development pre-release of the next version, e.g., `1.0.1.dev01`.
+       to a development pre-release of the next version, e.g., `3.0.0.dev01`.
     1. In `README.md`:
         1. If you just released a new major version, then under the main
            heading, in the sentence that begins `This documentation is for
