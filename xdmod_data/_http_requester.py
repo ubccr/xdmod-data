@@ -61,8 +61,8 @@ class _HttpRequester:
                     line_text,
                     num_rows_read,
                     params['show_progress'],
-                    fields,
                     data,
+                    fields,
                 )
                 num_rows_read += 1
             if params['show_progress']:
@@ -79,12 +79,12 @@ class _HttpRequester:
                 # The last line will be of size 0 and should not be
                 # processed.
                 elif last_line_size != '0':
-                    (fields, data) = self.__process_raw_data_response_row(
+                    (data, fields) = self.__process_raw_data_response_row(
                         line_text,
                         num_rows_read,
                         params['show_progress'],
-                        fields,
                         data,
+                        fields,
                     )
                     num_rows_read += 1
                 is_first_line_in_pair = not is_first_line_in_pair
