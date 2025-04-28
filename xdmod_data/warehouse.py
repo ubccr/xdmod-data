@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import pandas as pd
 from xdmod_data._descriptors import _Descriptors
@@ -7,7 +8,7 @@ import xdmod_data._validator as _validator
 
 
 class DataWarehouse:
-    """Access the XDMoD data warehouse via XDMoD's network API.
+    """Request data from an XDMoD data warehouse via the XDMoD REST API.
 
        Methods must be called within a runtime context using the ``with``
        keyword, e.g.,
@@ -24,16 +25,14 @@ class DataWarehouse:
        ------
        KeyError
            If the `XDMOD_API_TOKEN` environment variable has not been set.
-       RuntimeError
-           If a connection cannot be made to the XDMoD server specified by
-           `xdmod_host`.
        TypeError
            If `xdmod_host` is not a string.
     """
 
     def __init__(self, xdmod_host):
         self.__in_runtime_context = False
-        self.__http_requester = _HttpRequester(xdmod_host)
+        self.__logger = self.__init_logger()
+        self.__http_requester = _HttpRequester(xdmod_host, self.__logger)
         self.__descriptors = _Descriptors(self.__http_requester)
 
     def __enter__(self):
@@ -137,7 +136,7 @@ class DataWarehouse:
         return _response_processor._process_get_data_response(
             self,
             params,
-            response,
+            response.text,
         )
 
     def get_raw_data(
@@ -407,6 +406,15 @@ class DataWarehouse:
             return None
         d = self.__descriptors._get_aggregate()
         return d[realm]['dimensions'][dimension_id]['label']
+
+    def __init_logger(self):
+        logger = logging.getLogger('xdmod_data_warehouse')
+        logger.setLevel(logging.WARNING)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('Warning: %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        return logger
 
     def __get_data_frame(self, data, column_data, index=None):
         result = pd.DataFrame(

@@ -8,7 +8,8 @@ from xdmod_data.__version__ import __title__, __version__
 
 
 class _HttpRequester:
-    def __init__(self, xdmod_host):
+    def __init__(self, xdmod_host, logger):
+        self.__logger = logger
         self.__in_runtime_context = False
         _validator._assert_str('xdmod_host', xdmod_host)
         xdmod_host = re.sub('/+$', '', xdmod_host)
@@ -29,7 +30,6 @@ class _HttpRequester:
     def _start_up(self):
         self.__in_runtime_context = True
         self.__requests_session = requests.Session()
-        self.__assert_connection_to_xdmod_host()
 
     def _tear_down(self):
         if self.__requests_session is not None:
@@ -44,48 +44,58 @@ class _HttpRequester:
 
     def _request_raw_data(self, params):
         url_params = self.__get_raw_data_url_params(params)
-        # Once XDMoD 10.5 is no longer supported, there will be no need to call
-        # __get_raw_data_limit(), and the if/else statement below will not be
-        # necessary — only the body of the 'if' branch will be needed.
-        limit = self.__get_raw_data_limit()
         data = []
-        if limit == 'NA':
-            response_iter_lines = self.__request(
-                path='/rest/v1/warehouse/raw-data?' + url_params,
-                post_fields=None,
-                stream=True,
-            )
-            i = 0
-            for line in response_iter_lines:
+        fields = None
+        response = self.__request(
+            path='/rest/v1/warehouse/raw-data?' + url_params,
+            post_fields=None,
+            stream=True,
+        )
+        num_rows_read = 0
+        # Once XDMoD ?.? is no longer supported, only the else branch will
+        # be needed:
+        if response.headers['Content-Type'] == 'application/json-seq':
+            for line in response.iter_lines():
                 line_text = line.decode('utf-8').replace('\x1e', '')
-                line_json = json.loads(line_text)
-                if i == 0:
-                    response = {'fields': line_json}
-                else:
-                    data.append(line_json)
-                    # Only print every 10,000 rows to avoid I/O rate errors.
-                    if params['show_progress'] and i % 10000 == 0:
-                        self.__print_progress_msg(i, '\r')
-                i += 1
-            if params['show_progress']:
-                self.__print_progress_msg(i, 'DONE\n')
-        else:
-            num_rows = limit
-            offset = 0
-            while num_rows == limit:
-                response = self._request_json(
-                    path='/rest/v1/warehouse/raw-data?' + url_params
-                    + '&offset=' + str(offset),
+                (data, fields) = self.__process_raw_data_response_row(
+                    line_text,
+                    num_rows_read,
+                    params['show_progress'],
+                    data,
+                    fields,
                 )
-                partial_data = response['data']
-                data += partial_data
-                if params['show_progress']:
-                    self.__print_progress_msg(len(data), '\r')
-                num_rows = len(partial_data)
-                offset += limit
+                num_rows_read += 1
             if params['show_progress']:
-                self.__print_progress_msg(len(data), 'DONE\n')
-        return (data, response['fields'])
+                self.__print_progress_msg(num_rows_read, 'DONE\n')
+        else:
+            # The data stream consists of pairs of lines where the second
+            # line contains the row we care about and the first line
+            # contains the hex size of the second line.
+            is_first_line_in_pair = True
+            for line in response.iter_lines():
+                line_text = line.decode('utf-8')
+                if is_first_line_in_pair:
+                    last_line_size = line_text
+                # The last line will be of size 0 and should not be
+                # processed.
+                elif last_line_size != '0':
+                    (data, fields) = self.__process_raw_data_response_row(
+                        line_text,
+                        num_rows_read,
+                        params['show_progress'],
+                        data,
+                        fields,
+                    )
+                    num_rows_read += 1
+                is_first_line_in_pair = not is_first_line_in_pair
+            if params['show_progress']:
+                self.__print_progress_msg(num_rows_read, 'DONE\n')
+            if last_line_size != '0':
+                self.__logger.warning(
+                    'Connection closed before all data were received!' +
+                    ' You may need to request fewer days of data.',
+                )
+        return (data, fields)
 
     def _request_filter_values(self, realm_id, dimension_id):
         limit = 10000
@@ -110,31 +120,24 @@ class _HttpRequester:
 
     def _request_json(self, path, post_fields=None):
         response = self.__request(path, post_fields)
-        return json.loads(response)
-
-    def __assert_connection_to_xdmod_host(self):
-        try:
-            self.__request()
-        except RuntimeError as e:  # pragma: no cover
-            raise RuntimeError(
-                "Could not connect to xdmod_host '" + self.__xdmod_host
-                + "': " + str(e),
-            ) from None
+        return json.loads(response.text)
 
     def __request(self, path='', post_fields=None, stream=False):
         _validator._assert_runtime_context(self.__in_runtime_context)
         url = self.__xdmod_host + path
         if post_fields:
-            post_fields['Bearer'] = self.__api_token
             response = self.__requests_session.post(
                 url,
                 headers=self.__headers,
                 data=post_fields,
+                stream=stream,
             )
         else:
-            url += '&' if '?' in url else '?'
-            url += 'Bearer=' + self.__api_token
-            response = self.__requests_session.get(url, headers=self.__headers)
+            response = self.__requests_session.get(
+                url,
+                headers=self.__headers,
+                stream=stream,
+            )
         if response.status_code != 200:
             msg = ''
             try:
@@ -149,10 +152,7 @@ class _HttpRequester:
             raise RuntimeError(
                 'Error ' + str(response.status_code) + msg,
             ) from None
-        if stream:
-            return response.iter_lines()
-        else:
-            return response.text
+        return response
 
     def __get_data_post_fields(self, params):
         post_fields = {
@@ -187,21 +187,24 @@ class _HttpRequester:
                 )
         return urlencode(results)
 
-    # Once XDMoD 10.5 is no longer supported,
-    # there will be no need for this method.
-    def __get_raw_data_limit(self):
-        if self.__raw_data_limit is None:
-            try:
-                response = self._request_json(
-                    '/rest/v1/warehouse/raw-data/limit',
-                )
-                self.__raw_data_limit = int(response['data'])
-            except RuntimeError as e:
-                if '404' in str(e):
-                    self.__raw_data_limit = 'NA'
-                else:  # pragma: no cover
-                    raise
-        return self.__raw_data_limit
+    def __process_raw_data_response_row(
+        self,
+        line_text,
+        num_rows_read,
+        show_progress,
+        data,
+        fields,
+    ):
+        line_json = json.loads(line_text)
+        if num_rows_read == 0:
+            fields = line_json
+        else:
+            data.append(line_json)
+            # Only print every 10,000 rows to avoid I/O rate
+            # errors.
+            if show_progress and num_rows_read % 10000 == 0:
+                self.__print_progress_msg(num_rows_read, '\r')
+        return (data, fields)
 
     def __print_progress_msg(self, num_rows, end='\n'):
         progress_msg = (
