@@ -92,7 +92,8 @@ class _HttpRequester:
                 self.__print_progress_msg(num_rows_read, 'DONE\n')
             if last_line_size != '0':
                 self.__logger.warning(
-                    'Connection closed before all data were received!',
+                    'Connection closed before all data were received!' +
+                    ' You may need to request fewer days of data.',
                 )
         return (data, fields)
 
