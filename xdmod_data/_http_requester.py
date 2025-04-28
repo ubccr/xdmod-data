@@ -3,16 +3,13 @@ import os
 import re
 import requests
 from urllib.parse import urlencode
-import warnings
 import xdmod_data._validator as _validator
 from xdmod_data.__version__ import __title__, __version__
 
 
-warnings.simplefilter('always')
-
-
 class _HttpRequester:
-    def __init__(self, xdmod_host):
+    def __init__(self, xdmod_host, logger):
+        self.__logger = logger
         self.__in_runtime_context = False
         _validator._assert_str('xdmod_host', xdmod_host)
         xdmod_host = re.sub('/+$', '', xdmod_host)
@@ -94,9 +91,8 @@ class _HttpRequester:
             if params['show_progress']:
                 self.__print_progress_msg(num_rows_read, 'DONE\n')
             if last_line_size != '0':
-                warnings.warn(
+                self.__logger.warning(
                     'Connection closed before all data were received!',
-                    RuntimeWarning,
                 )
         return (data, fields)
 
