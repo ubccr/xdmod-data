@@ -92,7 +92,7 @@ class _HttpRequester:
                 self.__print_progress_msg(num_rows_read, 'DONE\n')
             if last_line_size != '0':
                 warnings.warn(
-                    'Connection closed before all data was received!',
+                    'Connection closed before all data were received!',
                     RuntimeWarning,
                 )
         return (data, fields)
