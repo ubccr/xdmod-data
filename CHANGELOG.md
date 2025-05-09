@@ -8,6 +8,9 @@ service providing JSON Web Tokens for authentication to an Open XDMoD portal
 
 It is compatible with Open XDMoD version 11.0.x.
 
+- Remove unnecessary request made when runtime context is entered
+  ([\#55](https://github.com/ubccr/xdmod-data/pull/55)).
+
 ## v1.0.3 (2025-01-30)
 
 This release fixes a `ValueError` error that occurs with the Plotly
