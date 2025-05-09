@@ -3,10 +3,9 @@
 ## v1.1.0 (XXXX-XX-XX)
 
 This release adds support for running the package in a JupyterHub that has a
-service providing JSON Web Tokens for authentication to an Open XDMoD portal
-(currently only ACCESS XDMoD v11.0.1 p? but also planned for Open XDMoD 11.5).
+service providing JSON Web Tokens for authentication to an Open XDMoD portal.
 
-It is compatible with Open XDMoD version 11.0.x.
+It is compatible with Open XDMoD version 11.0.2.
 
 - Remove unnecessary request made when runtime context is entered
   ([\#55](https://github.com/ubccr/xdmod-data/pull/55)).
