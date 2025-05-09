@@ -26,7 +26,8 @@ It is compatible with Open XDMoD version 11.0.x.
 This release adds support for running the package in a JupyterHub that has a
 service providing JSON Web Tokens for authentication to an Open XDMoD portal.
 
-It is compatible with Open XDMoD version 11.0.2.
+It is compatible with Open XDMoD version 11.0.x. To use with JupyterHub,
+requires Open XDMoD version 11.0.2+.
 
 - Remove unnecessary request made when runtime context is entered
   ([\#74](https://github.com/ubccr/xdmod-data/pull/74)).
