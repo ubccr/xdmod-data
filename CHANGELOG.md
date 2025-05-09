@@ -21,6 +21,16 @@ It is compatible with Open XDMoD version 11.0.x.
   ([\#84](https://github.com/ubccr/xdmod-data/pull/84)).
 - Add report module ([\#86](https://github.com/ubccr/xdmod-data/pull/86)).
 
+## v1.1.0 (XXXX-XX-XX)
+
+This release adds support for running the package in a JupyterHub that has a
+service providing JSON Web Tokens for authentication to an Open XDMoD portal.
+
+It is compatible with Open XDMoD version 11.0.2.
+
+- Remove unnecessary request made when runtime context is entered
+  ([\#74](https://github.com/ubccr/xdmod-data/pull/74)).
+
 ## v1.0.3 (2025-01-30)
 
 This release fixes a `ValueError` that occurs with the Plotly `timeseries`
