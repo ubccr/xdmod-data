@@ -52,7 +52,7 @@ class _HttpRequester:
             stream=True,
         )
         num_rows_read = 0
-        # Once XDMoD ?.? is no longer supported, only the else branch will
+        # Once XDMoD 11.0 is no longer supported, only the else branch will
         # be needed:
         if response.headers['Content-Type'] == 'application/json-seq':
             for line in response.iter_lines():
