@@ -410,8 +410,8 @@ class DataWarehouse:
     def __init_logger(self):
         logger = logging.getLogger('xdmod_data_warehouse')
         logger.setLevel(logging.WARNING)
-        handler = logging.StreamHandler()
         formatter = logging.Formatter('Warning: %(message)s')
+        handler = logging.StreamHandler()
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         return logger
