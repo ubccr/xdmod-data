@@ -91,9 +91,12 @@ class _HttpRequester:
             if params['show_progress']:
                 self.__print_progress_msg(num_rows_read, 'DONE\n')
             if last_line_size != '0':
-                self.__logger.warning(
-                    'Connection closed before all data were received!' +
-                    ' You may need to request fewer days of data.',
+                raise RuntimeError(
+                    'Connection closed before all data were received!'
+                    + ' You may need to break your request into smaller'
+                    + ' chunks by running `get_raw_data()` multiple times with'
+                    + ' fewer days specified for `duration` and then piecing'
+                    + ' the resulting data frames back together.'
                 )
         return (data, fields)
 
