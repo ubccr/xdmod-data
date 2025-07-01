@@ -11,7 +11,7 @@ Open XDMoD version 11.0.2+.
 - Remove unnecessary request made when runtime context is entered
   ([\#55](https://github.com/ubccr/xdmod-data/pull/55)).
 - Remove Open XDMoD 10.5 support
-  ([\#75](https://github.com/ubccr/xdmod-data/pull/75)).
+  ([\#68](https://github.com/ubccr/xdmod-data/pull/68)).
 
 ## v1.0.3 (2025-01-30)
 
