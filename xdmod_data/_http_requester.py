@@ -8,8 +8,7 @@ from xdmod_data.__version__ import __title__, __version__
 
 
 class _HttpRequester:
-    def __init__(self, xdmod_host, logger):
-        self.__logger = logger
+    def __init__(self, xdmod_host):
         self.__in_runtime_context = False
         _validator._assert_str('xdmod_host', xdmod_host)
         xdmod_host = re.sub('/+$', '', xdmod_host)
