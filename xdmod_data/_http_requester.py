@@ -96,7 +96,7 @@ class _HttpRequester:
                     + ' You may need to break your request into smaller'
                     + ' chunks by running `get_raw_data()` multiple times with'
                     + ' fewer days specified for `duration` and then piecing'
-                    + ' the resulting data frames back together.'
+                    + ' the resulting data frames back together.',
                 )
         return (data, fields)
 
