@@ -21,7 +21,3 @@ services:
     container_name: xdmod-11-0
     image: ${XDMOD_11_0_IMAGE}
     tty: true
-  xdmod-10-5:
-    container_name: xdmod-10-5
-    image: ${XDMOD_10_5_IMAGE}
-    tty: true

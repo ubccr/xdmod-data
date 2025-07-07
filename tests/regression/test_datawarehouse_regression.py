@@ -66,7 +66,7 @@ def __assert_dfs_equal(
     [
         (
             {},
-            ('54747' if XDMOD_VERSION == 'xdmod-10-5' else '54748'),
+            '54748',
             'raw-data-every-1000-no-fields-no-filters.csv',
         ),
         (
@@ -88,7 +88,7 @@ def __assert_dfs_equal(
                     ],
                 },
             },
-            ('33345' if XDMOD_VERSION == 'xdmod-10-5' else '33346'),
+            '33346',
             'raw-data-every-1000-with-fields-and-filters.csv',
         ),
     ],
@@ -108,7 +108,6 @@ def test_get_raw_data(valid_dw, capsys, additional_params, number, csv_title):
         data,
         dtype='string',
         index_col=0,
-        override_default_data=(XDMOD_VERSION == 'xdmod-10-5'),
     )
     assert 'Got ' + number + ' rows...DONE' in capsys.readouterr().out
 
@@ -130,7 +129,6 @@ def test_describe_realms(valid_dw):
     __assert_descriptor_dfs_equal(
         'realms.csv',
         valid_dw.describe_realms(),
-        override_default_data=(XDMOD_VERSION == 'xdmod-10-5'),
     )
 
 
@@ -138,7 +136,6 @@ def test_describe_metrics(valid_dw):
     __assert_descriptor_dfs_equal(
         'jobs-metrics.csv',
         valid_dw.describe_metrics('Jobs'),
-        override_default_data=(XDMOD_VERSION == 'xdmod-10-5'),
     )
 
 
@@ -146,7 +143,6 @@ def test_describe_dimensions(valid_dw):
     __assert_descriptor_dfs_equal(
         'jobs-dimensions.csv',
         valid_dw.describe_dimensions('Jobs'),
-        override_default_data=(XDMOD_VERSION == 'xdmod-10-5'),
     )
 
 
