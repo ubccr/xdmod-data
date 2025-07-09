@@ -36,6 +36,14 @@ def test___init___KeyError():
     os.environ['XDMOD_API_TOKEN'] = token
 
 
+def test__init__RuntimeError():
+    with pytest.raises(
+        RuntimeError,
+        match='A DataWarehouse object must be configured with an XDMoD host.'
+    ):
+        DataWarehouse()
+
+
 def test___enter___RuntimeError_xdmod_host_malformed():
     with pytest.raises(
         (
@@ -68,7 +76,6 @@ def test___enter___RuntimeError_xdmod_host_unsupported_protocol():
     ):
         with DataWarehouse(invalid_host) as dw:
             dw.describe_realms()
-
 
 def test___enter___RuntimeError_401():
     with pytest.raises(
