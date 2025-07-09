@@ -37,11 +37,14 @@ def test___init___KeyError():
 
 
 def test__init__RuntimeError():
+    xdmod_host = os.environ['XDMOD_HOST']
+    del os.environ['XDMOD_HOST']
     with pytest.raises(
         RuntimeError,
         match='A DataWarehouse object must be configured with an XDMoD host.',
     ):
         DataWarehouse()
+    os.environ['XDMOD_HOST'] = xdmod_host
 
 
 def test___enter___RuntimeError_xdmod_host_malformed():
