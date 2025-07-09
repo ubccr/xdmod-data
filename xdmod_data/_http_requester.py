@@ -13,14 +13,8 @@ class _HttpRequester:
         _validator._assert_str('xdmod_host', xdmod_host)
         xdmod_host = re.sub('/+$', '', xdmod_host)
         self.__xdmod_host = xdmod_host
-        try:
-            self.__api_token = os.environ['XDMOD_API_TOKEN']
-        except KeyError:
-            raise KeyError(
-                '`XDMOD_API_TOKEN` environment variable has not been set.',
-            ) from None
+        self.__api_token = os.getenv('XDMOD_API_TOKEN')
         self.__headers = {
-            'Authorization': 'Bearer ' + self.__api_token,
             'User-Agent': __title__ + ' Python v' + __version__,
         }
         self.__requests_session = None
@@ -93,17 +87,39 @@ class _HttpRequester:
     def __request(self, path='', post_fields=None, stream=False):
         _validator._assert_runtime_context(self.__in_runtime_context)
         url = self.__xdmod_host + path
+        token_error_msg = (
+            'If running in JupyterHub connected with XDMoD, this is likely an'
+            + ' error with the JupyterHub. Otherwise, make sure the'
+            + ' `XDMOD_API_TOKEN` environment variable is set before the'
+            + ' `DataWarehouse` is constructed; it should be set to a valid'
+            + ' API token obtained from the XDMoD web portal.'
+        )
+        if self.__api_token is not None:
+            token = self.__api_token
+        else:
+            try:
+                token = self.__request_json_web_token()
+            except RuntimeError as e:
+                raise RuntimeError(
+                    token_error_msg + str(e),
+                ) from None
+        headers = {
+            **self.__headers,
+            **{
+                'Authorization': 'Bearer ' + token,
+            },
+        }
         if post_fields:
-            post_fields['Bearer'] = self.__api_token
+            post_fields['Bearer'] = token
             response = self.__requests_session.post(
                 url,
-                headers=self.__headers,
+                headers=headers,
                 data=post_fields,
             )
         else:
             url += '&' if '?' in url else '?'
-            url += 'Bearer=' + self.__api_token
-            response = self.__requests_session.get(url, headers=self.__headers)
+            url += 'Bearer=' + token
+            response = self.__requests_session.get(url, headers=headers)
         if response.status_code != 200:
             msg = ''
             try:
@@ -162,3 +178,27 @@ class _HttpRequester:
             + '...'
         )
         print(progress_msg, end=end)
+
+    def __request_json_web_token(self):
+        jupyterhub_api_token = os.getenv('JUPYTERHUB_API_TOKEN')
+        jupyterhub_jwt_url = os.getenv('JUPYTERHUB_JWT_URL')
+        if not jupyterhub_api_token or not jupyterhub_jwt_url:
+            raise RuntimeError(
+                'Error: External authentication mechanism not configured.',
+            )
+        try:
+            headers = {
+                **self.__headers,
+                'Authorization': 'Bearer ' + jupyterhub_api_token,
+            }
+            r = requests.get(
+                jupyterhub_jwt_url,
+                headers=headers,
+            )
+            r.raise_for_status()
+            json_web_token = r.text.strip()
+        except requests.exceptions.RequestException as e:
+            raise RuntimeError(
+                'Error while obtaining authentication token: ' + str(e),
+            )
+        return json_web_token

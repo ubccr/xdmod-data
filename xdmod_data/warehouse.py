@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pandas as pd
 from xdmod_data._descriptors import _Descriptors
@@ -24,12 +26,27 @@ class DataWarehouse:
        ------
        KeyError
            If the `XDMOD_API_TOKEN` environment variable has not been set.
+       RuntimeError
+           If a connection cannot be made to the XDMoD server specified by
+           `xdmod_host`.
        TypeError
            If `xdmod_host` is not a string.
     """
 
-    def __init__(self, xdmod_host):
+    def __init__(self, xdmod_host=None):
         self.__in_runtime_context = False
+        if xdmod_host is None:
+            environment_host = os.getenv('XDMOD_HOST')
+            if environment_host is None:
+                host_error_msg = (
+                    'A DataWarehouse object must be '
+                    + 'configured with an XDMoD host.'
+                )
+                raise RuntimeError(
+                    host_error_msg,
+                ) from None
+            else:
+                xdmod_host = environment_host
         self.__http_requester = _HttpRequester(xdmod_host)
         self.__descriptors = _Descriptors(self.__http_requester)
 
