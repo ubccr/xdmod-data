@@ -54,7 +54,7 @@ for xdmod_container in $xdmod_containers; do
         fi
         # Install and run the latest development version of the XDMoD
         # web server.
-        docker exec $xdmod_container bash -c 'git clone --depth=1 --branch=$branch https://github.com/ubccr/xdmod.git /root/xdmod'
+        docker exec $xdmod_container bash -c "git clone --depth=1 --branch=$branch https://github.com/ubccr/xdmod.git /root/xdmod"
         docker exec -w /root/xdmod $xdmod_container bash -c 'composer install'
         docker exec -w /root/xdmod $xdmod_container bash -c '/root/bin/buildrpm xdmod'
         docker exec -w /root/xdmod $xdmod_container bash -c 'XDMOD_TEST_MODE=upgrade ./tests/ci/bootstrap.sh'
