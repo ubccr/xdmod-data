@@ -57,7 +57,7 @@ for xdmod_container in $xdmod_containers; do
         docker exec $xdmod_container bash -c "git clone --depth=1 --branch=$branch https://github.com/ubccr/xdmod.git /root/xdmod"
         docker exec -w /root/xdmod $xdmod_container bash -c 'composer install'
         docker exec -w /root/xdmod $xdmod_container bash -c '/root/bin/buildrpm xdmod'
-        docker exec -w /root/xdmod $xdmod_container bash -x -c 'XDMOD_TEST_MODE=upgrade ./tests/ci/bootstrap.sh'
+        docker exec -w /root/xdmod $xdmod_container bash -c 'XDMOD_TEST_MODE=upgrade bash -x ./tests/ci/bootstrap.sh'
         docker exec -w /root/xdmod $xdmod_container bash -c './tests/ci/validate.sh'
     elif [[ "$xdmod_container" =~ xdmod-.+ ]]; then
         # Run the XDMoD web server.
