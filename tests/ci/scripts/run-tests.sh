@@ -46,7 +46,7 @@ for xdmod_container in $xdmod_containers; do
     # Update the server hostnames and certificates so the Python
     # containers can make requests to them.
     docker exec $xdmod_container bash -c "sed -i \"s/localhost/$xdmod_container/g\" /etc/httpd/conf.d/xdmod.conf"
-    if [[ "$xdmod_container" =~ 'xdmod-*-dev' ]]; then
+    if [[ "$xdmod_container" =~ xdmod-*-dev ]]; then
         if [ "$xdmod_container" = 'xdmod-main-dev' ]; then
             branch='main'
         else
