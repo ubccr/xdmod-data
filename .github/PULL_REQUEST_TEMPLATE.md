@@ -26,7 +26,6 @@
 ## Checklist:
 <!--- Go over all the following points and make sure they have all been completed -->
 <!--- If you're unsure about any of these, don't hesitate to ask. We're here to help! -->
-- [ ] `xdmod_data/__version__.py` has been updated to the next development version
 - [ ] The milestone is set correctly on the pull request
 - [ ] The appropriate labels have been added to the pull request
 - [ ] Updates have been made to the `xdmod-notebooks` repository as necessary, and the notebooks all run successfully
