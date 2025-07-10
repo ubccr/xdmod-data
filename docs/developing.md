@@ -116,8 +116,6 @@ git+https://github.com/username/xdmod-data.git@branch-name
         1. In the `README.md`, update the Open XDMoD compatibility matrix.
         1. Get the PR approved and merged.
 1. In a PR to the same branch you just released:
-    1. In `xdmod_data/__version__.py`, make sure the version number is updated
-       to a development pre-release of the next version, e.g., `3.0.0.dev01`.
     1. In `README.md`:
         1. If you just released a new major version:
             1. Under the main heading, in the sentence that begins `This
@@ -141,5 +139,6 @@ git+https://github.com/username/xdmod-data.git@branch-name
             1. Add the expected compatibility with Open XDMoD versions.
         1. In `README.md`, add the new version under development to the Open XDMoD
            compatibility matrix.
-        1. In `xdmod_data/__version__.py`, change the version number to the new
-           version under development.
+        1. In `xdmod_data/__version__.py`, change the version number to a
+           development release of the new version under development, e.g.,
+           `3.0.0.dev1`.
