@@ -46,7 +46,7 @@ for xdmod_container in $xdmod_containers; do
     # Update the server hostnames and certificates so the Python
     # containers can make requests to them.
     docker exec $xdmod_container bash -c "sed -i \"s/localhost/$xdmod_container/g\" /etc/httpd/conf.d/xdmod.conf"
-    if [[ "$xdmod_container" =~ xdmod-*-dev ]]; then
+    if [[ "$xdmod_container" =~ xdmod-.+-dev ]]; then
         if [ "$xdmod_container" = 'xdmod-main-dev' ]; then
             branch='main'
         else
@@ -59,7 +59,7 @@ for xdmod_container in $xdmod_containers; do
         docker exec -w /root/xdmod $xdmod_container bash -c '/root/bin/buildrpm xdmod'
         docker exec -w /root/xdmod $xdmod_container bash -c 'XDMOD_TEST_MODE=upgrade ./tests/ci/bootstrap.sh'
         docker exec -w /root/xdmod $xdmod_container bash -c './tests/ci/validate.sh'
-    elif [[ "$xdmod_container" =~ xdmod-* ]]; then
+    elif [[ "$xdmod_container" =~ xdmod-.+ ]]; then
         # Run the XDMoD web server.
         docker exec $xdmod_container bash -c '/root/bin/services start'
     fi
