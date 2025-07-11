@@ -108,6 +108,7 @@ def test_get_raw_data(valid_dw, capsys, additional_params, number, csv_title):
         data,
         dtype='string',
         index_col=0,
+        override_default_data=(XDMOD_VERSION == 'xdmod-11-0'),
     )
     assert 'Got ' + number + ' rows...DONE' in capsys.readouterr().out
 
