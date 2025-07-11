@@ -85,28 +85,31 @@ for xdmod_container in $xdmod_containers; do
     # XDMoD API token for the XDMoD container.
     for python_container in $python_containers; do
         docker cp $xdmod_container.crt $python_container:/home/circleci/project
-        rest_token=$(docker exec \
-            -e CURL_CA_BUNDLE="/home/circleci/project/$xdmod_container.crt" \
-            $python_container \
-            bash -c "curl \
-                -sS \
-                -X POST \
-                -c xdmod.cookie \
-                -d 'username=normaluser&password=normaluser' \
-                https://$xdmod_container/rest/auth/login \
-                | jq -r '.results.token'"
-        )
         docker exec $python_container bash -c 'echo -n "XDMOD_API_TOKEN="' > ${xdmod_container}-token
-        docker exec \
-            -e CURL_CA_BUNDLE="/home/circleci/project/$xdmod_container.crt" \
-            $python_container \
-            bash -c "curl \
-                -sS \
-                -X POST \
-                -b xdmod.cookie \
-                https://$xdmod_container/rest/users/current/api/token?token=$rest_token \
-                | jq -r '.data.token'" \
-                >> ${xdmod_container}-token
+    done
+    rest_token=$(docker exec \
+        -e CURL_CA_BUNDLE="/home/circleci/project/$xdmod_container.crt" \
+        $python_container \
+        bash -c "curl \
+            -sS \
+            -X POST \
+            -c xdmod.cookie \
+            -d 'username=normaluser&password=normaluser' \
+            https://$xdmod_container/rest/auth/login \
+            | jq -r '.results.token'"
+    )
+    api_token=$(docker exec \
+        -e CURL_CA_BUNDLE="/home/circleci/project/$xdmod_container.crt" \
+        $python_container \
+        bash -c "curl \
+            -sS \
+            -X POST \
+            -b xdmod.cookie \
+            https://$xdmod_container/rest/users/current/api/token?token=$rest_token \
+            | jq -r '.data.token'"
+    )
+    for python_container in $python_containers; do
+        docker exec $python_container bash -c "echo $api_token" >> ${xdmod_container}-token
     done
 done
 
