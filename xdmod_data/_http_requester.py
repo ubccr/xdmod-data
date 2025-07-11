@@ -72,6 +72,11 @@ class _HttpRequester:
             # contains the hex size of the second line.
             is_first_line_in_pair = True
             for line in response.iter_lines():
+                # There is a bug in Requests (see
+                # https://github.com/psf/requests/issues/5540) such that empty
+                # lines are occasionally sent via iter_lines(); ignore these.
+                if line == b'':
+                    continue
                 line_text = line.decode('utf-8')
                 if is_first_line_in_pair:
                     last_line_size = line_text

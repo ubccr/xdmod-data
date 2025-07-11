@@ -136,6 +136,7 @@ def test_describe_metrics(valid_dw):
     __assert_descriptor_dfs_equal(
         'jobs-metrics.csv',
         valid_dw.describe_metrics('Jobs'),
+        override_default_data=(XDMOD_VERSION == 'xdmod-11-0'),
     )
 
 
@@ -143,6 +144,7 @@ def test_describe_dimensions(valid_dw):
     __assert_descriptor_dfs_equal(
         'jobs-dimensions.csv',
         valid_dw.describe_dimensions('Jobs'),
+        override_default_data=(XDMOD_VERSION == 'xdmod-11-0'),
     )
 
 
