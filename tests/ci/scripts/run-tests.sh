@@ -83,29 +83,31 @@ for xdmod_container in $xdmod_containers; do
     docker cp $xdmod_container:/etc/pki/tls/certs/$xdmod_container.crt $PROJECT_DIR
     # Copy certificate to one of the Python containers and get an
     # XDMoD API token for the XDMoD container.
-    docker cp $xdmod_container.crt $python_container:/home/circleci/project
-    rest_token=$(docker exec \
-        -e CURL_CA_BUNDLE="/home/circleci/project/$xdmod_container.crt" \
-        $python_container \
-        bash -c "curl \
-            -sS \
-            -X POST \
-            -c xdmod.cookie \
-            -d 'username=normaluser&password=normaluser' \
-            https://$xdmod_container/rest/auth/login \
-            | jq -r '.results.token'"
-    )
-    docker exec $python_container bash -c 'echo -n "XDMOD_API_TOKEN="' > ${xdmod_container}-token
-    docker exec \
-        -e CURL_CA_BUNDLE="/home/circleci/project/$xdmod_container.crt" \
-        $python_container \
-        bash -c "curl \
-            -sS \
-            -X POST \
-            -b xdmod.cookie \
-            https://$xdmod_container/rest/users/current/api/token?token=$rest_token \
-            | jq -r '.data.token'" \
-            >> ${xdmod_container}-token
+    for python_container in $python_containers; do
+        docker cp $xdmod_container.crt $python_container:/home/circleci/project
+        rest_token=$(docker exec \
+            -e CURL_CA_BUNDLE="/home/circleci/project/$xdmod_container.crt" \
+            $python_container \
+            bash -c "curl \
+                -sS \
+                -X POST \
+                -c xdmod.cookie \
+                -d 'username=normaluser&password=normaluser' \
+                https://$xdmod_container/rest/auth/login \
+                | jq -r '.results.token'"
+        )
+        docker exec $python_container bash -c 'echo -n "XDMOD_API_TOKEN="' > ${xdmod_container}-token
+        docker exec \
+            -e CURL_CA_BUNDLE="/home/circleci/project/$xdmod_container.crt" \
+            $python_container \
+            bash -c "curl \
+                -sS \
+                -X POST \
+                -b xdmod.cookie \
+                https://$xdmod_container/rest/users/current/api/token?token=$rest_token \
+                | jq -r '.data.token'" \
+                >> ${xdmod_container}-token
+    done
 done
 
 # Run the tests against each XDMoD web server.
