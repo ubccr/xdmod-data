@@ -57,6 +57,13 @@ for xdmod_container in $xdmod_containers; do
         docker exec $xdmod_container bash -c "git clone --depth=1 --branch=$branch https://github.com/ubccr/xdmod.git /root/xdmod"
         docker exec -w /root/xdmod $xdmod_container bash -c 'composer install'
         docker exec -w /root/xdmod $xdmod_container bash -c '/root/bin/buildrpm xdmod'
+        # The 11.0 version of bootstrap.sh still contains a prompt in
+        # xdmod-upgrade.tcl for upgrading from 10.5 to 11.0, but in this case
+        # we are upgrading from 11.0 to the latest development version of 11.0,
+        # so that prompt should no longer be expected.
+        if [ "$xdmod_container" = 'xdmod-11-0-dev' ]; then
+            docker exec -w /root/xdmod $xdmod_container bash -c 'sed -i "/^confirmResourceSpecs/d" tests/ci/scripts/xdmod-upgrade.tcl'
+        fi
         docker exec -w /root/xdmod $xdmod_container bash -c 'XDMOD_TEST_MODE=upgrade bash -x ./tests/ci/bootstrap.sh'
         docker exec -w /root/xdmod $xdmod_container bash -c './tests/ci/validate.sh'
     elif [[ "$xdmod_container" =~ xdmod-.+ ]]; then
