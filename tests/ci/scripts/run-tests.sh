@@ -43,33 +43,34 @@ for xdmod_container in $xdmod_containers; do
     # Generate OpenSSL key and certificate.
     docker exec $xdmod_container bash -c "openssl genrsa -rand /proc/cpuinfo:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/uptime 2048 > /etc/pki/tls/private/$xdmod_container.key"
     docker exec $xdmod_container bash -c "openssl req -new -key /etc/pki/tls/private/$xdmod_container.key -x509 -sha256 -days 365 -set_serial $RANDOM -extensions v3_req -out /etc/pki/tls/certs/$xdmod_container.crt -subj '/C=XX/L=Default City/O=Default Company Ltd/CN=$xdmod_container' -addext 'subjectAltName=DNS:$xdmod_container'"
-    # Update the server hostnames and certificates so the Python
-    # containers can make requests to them.
-    docker exec $xdmod_container bash -c "sed -i \"s/localhost/$xdmod_container/g\" /etc/httpd/conf.d/xdmod.conf"
+    # For the containers with the development versions of the XDMoD web server,
     if [[ "$xdmod_container" =~ xdmod-.+-dev ]]; then
+        # Install and run the latest development version of the XDMoD
+        # web server.
         if [ "$xdmod_container" = 'xdmod-main-dev' ]; then
             branch='main'
         else
             branch="xdmod$(echo $xdmod_container | sed 's/xdmod-\(.*\)-dev/\1/' | sed 's/-/./')"
         fi
-        # Install and run the latest development version of the XDMoD
-        # web server.
         docker exec $xdmod_container bash -c "git clone --depth=1 --branch=$branch https://github.com/ubccr/xdmod.git /root/xdmod"
         docker exec -w /root/xdmod $xdmod_container bash -c 'composer install'
         docker exec -w /root/xdmod $xdmod_container bash -c '/root/bin/buildrpm xdmod'
-        # The 11.0 version of bootstrap.sh still contains a prompt in
-        # xdmod-upgrade.tcl for upgrading from 10.5 to 11.0, but in this case
-        # we are upgrading from 11.0 to the latest development version of 11.0,
-        # so that prompt should no longer be expected.
+        # Work around the fact that the 11.0 version of bootstrap.sh contains
+        # an extra prompt in xdmod-upgrade.tcl for upgrading from 10.5 to 11.0,
+        # and in this case we are upgrading from an earlier version of 11.0 to
+        # the latest development version of 11.0, so that prompt should not be
+        # expected.
         if [ "$xdmod_container" = 'xdmod-11-0-dev' ]; then
             docker exec -w /root/xdmod $xdmod_container bash -c 'sed -i "/^confirmResourceSpecs/d" tests/ci/scripts/xdmod-upgrade.tcl'
         fi
         docker exec -w /root/xdmod $xdmod_container bash -c 'XDMOD_TEST_MODE=upgrade bash -x ./tests/ci/bootstrap.sh'
         docker exec -w /root/xdmod $xdmod_container bash -c './tests/ci/validate.sh'
-    elif [[ "$xdmod_container" =~ xdmod-.+ ]]; then
-        # Run the XDMoD web server.
-        docker exec $xdmod_container bash -c '/root/bin/services start'
     fi
+    # Update the server hostnames and certificates so the Python containers can
+    # make requests to them.
+    docker exec $xdmod_container bash -c "sed -i \"s/localhost/$xdmod_container/g\" /etc/httpd/conf.d/xdmod.conf"
+    # (Re)start the XDMoD-related services.
+    docker exec $xdmod_container bash -c '/root/bin/services restart'
     # Copy the 10,000 users file into the container and shred it.
     # We use this file so we can test filters with more than 10,000
     # values and date ranges that span multiple quarters.
@@ -81,12 +82,13 @@ for xdmod_container in $xdmod_containers; do
     docker exec $xdmod_container xdmod-ingestor --aggregate=job --last-modified-start-date $date
     # Copy certificate (for doing requests) from the XDMoD container.
     docker cp $xdmod_container:/etc/pki/tls/certs/$xdmod_container.crt $PROJECT_DIR
-    # Copy certificate to one of the Python containers and get an
-    # XDMoD API token for the XDMoD container.
+    # For each of the python containers,
     for python_container in $python_containers; do
+        # Copy the certificate to the container.
         docker cp $xdmod_container.crt $python_container:/home/circleci/project
-        docker exec $python_container bash -c 'echo -n "XDMOD_API_TOKEN="' > ${xdmod_container}-token
     done
+    # Use one of the Python containers to make requests to the XDMoD container
+    # to obtain an API token that will be used by all the Python containers.
     rest_token=$(docker exec \
         -e CURL_CA_BUNDLE="/home/circleci/project/$xdmod_container.crt" \
         $python_container \
@@ -108,17 +110,12 @@ for xdmod_container in $xdmod_containers; do
             https://$xdmod_container/rest/users/current/api/token?token=$rest_token \
             | jq -r '.data.token'"
     )
-    for python_container in $python_containers; do
-        docker exec $python_container bash -c "echo $api_token" >> ${xdmod_container}-token
-    done
+    echo "XDMOD_API_TOKEN=$api_token" > ${xdmod_container}-token
 done
 
 # Run the tests against each XDMoD web server.
 for python_container in $python_containers; do
     for xdmod_container in $xdmod_containers; do
-        # Copy certificate (for doing requests) to the Python
-        # container.
-        docker cp $xdmod_container.crt $python_container:/home/circleci/project
         # Copy XDMoD API token to the Python container.
         docker cp $PROJECT_DIR/${xdmod_container}-token $python_container:/home/circleci/.xdmod-data-token
         # Run tests in the Python container.
