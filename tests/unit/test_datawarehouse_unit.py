@@ -19,8 +19,9 @@ def set_environ():
     yield
     os.environ['XDMOD_API_TOKEN'] = token
 
+
 def test__init__xdmod_host_environment_variable():
-    dw = DataWarehouse()
+    dw = DataWarehouse()  # noqa
 
 
 def test___init___TypeError_xdmod_host():
