@@ -156,7 +156,7 @@ class _HttpRequester:
         )
         if self.__api_token is not None:
             token = self.__api_token
-        else:
+        else: # pragma: no cover
             try:
                 token = self.__request_json_web_token()
             except RuntimeError as e:
@@ -260,7 +260,7 @@ class _HttpRequester:
         )
         print(progress_msg, end=end)
 
-    def __request_json_web_token(self):
+    def __request_json_web_token(self): # pragma: no cover
         jupyterhub_api_token = os.getenv('JUPYTERHUB_API_TOKEN')
         jupyterhub_jwt_url = os.getenv('JUPYTERHUB_JWT_URL')
         if not jupyterhub_api_token or not jupyterhub_jwt_url:
