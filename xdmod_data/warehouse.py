@@ -28,7 +28,7 @@ class DataWarehouse:
            If the `XDMOD_API_TOKEN` environment variable has not been set.
        RuntimeError
            If neither the `xdmod_host` local variable nor the
-           `XDMOD_HOST` environment variables are set.
+           `XDMOD_HOST` environment variable are set.
        TypeError
            If `xdmod_host` is not a string.
     """
