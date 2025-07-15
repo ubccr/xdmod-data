@@ -134,7 +134,7 @@ class DataWarehouse:
         return _response_processor._process_get_data_response(
             self,
             params,
-            response,
+            response.text,
         )
 
     def get_raw_data(
