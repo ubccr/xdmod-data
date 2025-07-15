@@ -106,14 +106,14 @@ class _HttpRequester:
 
     def _request_resources(self, service_provider):
 
-        url_params = ""
+        url_params = ''
         if service_provider:
-            url_params = "?" + urlencode({
-                'service_provider': service_provider
+            url_params = '?' + urlencode({
+                'service_provider': service_provider,
             })
 
         result = self._request_json(
-            path="/rest/v1/warehouse/resources" + url_params,
+            path='/rest/v1/warehouse/resources' + url_params,
         )
         return result['results']
 

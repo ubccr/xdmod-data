@@ -44,7 +44,7 @@ class DataWarehouse:
 
     def get_resources(
         self,
-        service_provider=None
+        service_provider=None,
     ):
         """Get a dictionary containing information about the configured
            resources in XDMoD.
