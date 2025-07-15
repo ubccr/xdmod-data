@@ -19,8 +19,8 @@ It is compatible with Open XDMoD version 11.0.x.
 
 ## v1.0.3 (2025-01-30)
 
-This release fixes a `ValueError` error that occurs with the Plotly
-`timeseries` template.
+This release fixes a `ValueError` that occurs with the Plotly `timeseries`
+template.
 
 It is compatible with Open XDMoD versions 11.0.x and 10.5.x.
 
