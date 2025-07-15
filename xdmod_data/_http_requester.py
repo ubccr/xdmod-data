@@ -44,26 +44,65 @@ class _HttpRequester:
     def _request_raw_data(self, params):
         url_params = self.__get_raw_data_url_params(params)
         data = []
-        response_iter_lines = self.__request(
+        fields = None
+        response = self.__request(
             path='/rest/v1/warehouse/raw-data?' + url_params,
             post_fields=None,
             stream=True,
         )
-        i = 0
-        for line in response_iter_lines:
-            line_text = line.decode('utf-8').replace('\x1e', '')
-            line_json = json.loads(line_text)
-            if i == 0:
-                response = {'fields': line_json}
-            else:
-                data.append(line_json)
-                # Only print every 10,000 rows to avoid I/O rate errors.
-                if params['show_progress'] and i % 10000 == 0:
-                    self.__print_progress_msg(i, '\r')
-            i += 1
-        if params['show_progress']:
-            self.__print_progress_msg(i, 'DONE\n')
-        return (data, response['fields'])
+        num_rows_read = 0
+        # Once XDMoD 11.0 is no longer supported, only the else branch will
+        # be needed:
+        if response.headers['Content-Type'] == 'application/json-seq':
+            for line in response.iter_lines():
+                line_text = line.decode('utf-8').replace('\x1e', '')
+                (data, fields) = self.__process_raw_data_response_row(
+                    line_text,
+                    num_rows_read,
+                    params['show_progress'],
+                    data,
+                    fields,
+                )
+                num_rows_read += 1
+            if params['show_progress']:
+                self.__print_progress_msg(num_rows_read, 'DONE\n')
+        else:
+            # The data stream consists of pairs of lines where the second
+            # line contains the row we care about and the first line
+            # contains the hex size of the second line.
+            is_first_line_in_pair = True
+            for line in response.iter_lines():
+                # There is a bug in Requests (see
+                # https://github.com/psf/requests/issues/5540) such that empty
+                # lines are occasionally sent via iter_lines(); ignore these.
+                if line == b'':
+                    continue
+                line_text = line.decode('utf-8')
+                if is_first_line_in_pair:
+                    last_line_size = line_text
+                # The last line will be of size 0 and should not be
+                # processed.
+                elif last_line_size != '0':  # pragma: no branch
+                    (data, fields) = self.__process_raw_data_response_row(
+                        line_text,
+                        num_rows_read,
+                        params['show_progress'],
+                        data,
+                        fields,
+                    )
+                    num_rows_read += 1
+                is_first_line_in_pair = not is_first_line_in_pair
+            if params['show_progress']:
+                self.__print_progress_msg(num_rows_read, 'DONE\n')
+            if last_line_size != '0':  # pragma: no cover
+                raise RuntimeError(
+                    'Connection closed before all data were received!'
+                    + ' You may need to break your request into smaller'
+                    + ' chunks by running `get_raw_data()` multiple times with'
+                    + ' fewer days specified for `duration` and then piecing'
+                    + ' the resulting data frames back together.',
+                )
+        return (data, fields)
 
     def _request_resources(self, service_provider):
 
@@ -101,7 +140,7 @@ class _HttpRequester:
 
     def _request_json(self, path, post_fields=None):
         response = self.__request(path, post_fields)
-        return json.loads(response)
+        return json.loads(response.text)
 
     def __request(self, path='', post_fields=None, stream=False):
         _validator._assert_runtime_context(self.__in_runtime_context)
@@ -112,11 +151,16 @@ class _HttpRequester:
                 url,
                 headers=self.__headers,
                 data=post_fields,
+                stream=stream,
             )
         else:
             url += '&' if '?' in url else '?'
             url += 'Bearer=' + self.__api_token
-            response = self.__requests_session.get(url, headers=self.__headers)
+            response = self.__requests_session.get(
+                url,
+                headers=self.__headers,
+                stream=stream,
+            )
         if response.status_code != 200:
             msg = ''
             try:
@@ -131,10 +175,7 @@ class _HttpRequester:
             raise RuntimeError(
                 'Error ' + str(response.status_code) + msg,
             ) from None
-        if stream:
-            return response.iter_lines()
-        else:
-            return response.text
+        return response
 
     def __get_data_post_fields(self, params):
         post_fields = {
@@ -168,6 +209,25 @@ class _HttpRequester:
                     params['filters'][dimension],
                 )
         return urlencode(results)
+
+    def __process_raw_data_response_row(
+        self,
+        line_text,
+        num_rows_read,
+        show_progress,
+        data,
+        fields,
+    ):
+        line_json = json.loads(line_text)
+        if num_rows_read == 0:
+            fields = line_json
+        else:
+            data.append(line_json)
+            # Only print every 10,000 rows to avoid I/O rate
+            # errors.
+            if show_progress and num_rows_read % 10000 == 0:
+                self.__print_progress_msg(num_rows_read, '\r')
+        return (data, fields)
 
     def __print_progress_msg(self, num_rows, end='\n'):
         progress_msg = (
