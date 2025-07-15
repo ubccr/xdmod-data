@@ -104,6 +104,19 @@ class _HttpRequester:
                 )
         return (data, fields)
 
+    def _request_resources(self, service_provider):
+
+        url_params = ""
+        if service_provider:
+            url_params = "?" + urlencode({
+                'service_provider': service_provider
+            })
+
+        result = self._request_json(
+            path="/rest/v1/warehouse/resources" + url_params,
+        )
+        return result['results']
+
     def _request_filter_values(self, realm_id, dimension_id):
         limit = 10000
         data = []
