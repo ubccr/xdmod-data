@@ -42,34 +42,6 @@ class DataWarehouse:
         self.__http_requester._tear_down()
         self.__in_runtime_context = False
 
-    def get_resources(
-        self,
-        service_provider=None
-    ):
-        """Get a dictionary containing information about the configured
-           resources in XDMoD.
-
-           Parameters
-           ----------
-           service_provider : str, optional
-               If present then the resource list is filtered to only contain
-               resources associated with the service provider.
-
-           Returns
-           -------
-           dict
-
-           Raises
-           ------
-           KeyError
-               If the `XDMOD_API_TOKEN` environment variable has not been set.
-        """
-        _validator._assert_runtime_context(self.__in_runtime_context)
-
-        response = self.__http_requester._request_resources(service_provider)
-
-        return response
-
     def get_data(
         self,
         duration='Previous month',
@@ -422,6 +394,29 @@ class DataWarehouse:
             ('id', 'label', 'description'),
             'id',
         )
+
+    def get_resources(self, service_provider=None):
+        """Get a dictionary containing information about the configured
+           resources in XDMoD.
+
+           Parameters
+           ----------
+           service_provider : str, optional
+               If present then the resource list is filtered only to contain
+               resources associated with the service provider.
+
+           Returns
+           -------
+           dict
+               A dictionary containing the information about the resources.
+
+           Raises
+           ------
+           RuntimeError
+               If this method is called outside the runtime context.
+        """
+        _validator._assert_runtime_context(self.__in_runtime_context)
+        return self.__http_requester._request_resources(service_provider)
 
     def _get_metric_label(self, realm, metric_id):
         d = self.__descriptors._get_aggregate()

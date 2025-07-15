@@ -104,19 +104,6 @@ class _HttpRequester:
                 )
         return (data, fields)
 
-    def _request_resources(self, service_provider):
-
-        url_params = ""
-        if service_provider:
-            url_params = "?" + urlencode({
-                'service_provider': service_provider
-            })
-
-        result = self._request_json(
-            path="/rest/v1/warehouse/resources" + url_params,
-        )
-        return result['results']
-
     def _request_filter_values(self, realm_id, dimension_id):
         limit = 10000
         data = []
@@ -137,6 +124,17 @@ class _HttpRequester:
             num_rows = len(response['data'])
             offset += limit
         return data
+
+    def _request_resources(self, service_provider):
+        url_params = ''
+        if service_provider is not None:
+            url_params = '?' + urlencode({
+                'service_provider': service_provider,
+            })
+        result = self._request_json(
+            path='/rest/v1/warehouse/resources' + url_params,
+        )
+        return result['results']
 
     def _request_json(self, path, post_fields=None):
         response = self.__request(path, post_fields)
