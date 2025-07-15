@@ -82,7 +82,7 @@ class _HttpRequester:
                     last_line_size = line_text
                 # The last line will be of size 0 and should not be
                 # processed.
-                elif last_line_size != '0':
+                elif last_line_size != '0':  # pragma: no branch
                     (data, fields) = self.__process_raw_data_response_row(
                         line_text,
                         num_rows_read,
@@ -94,7 +94,7 @@ class _HttpRequester:
                 is_first_line_in_pair = not is_first_line_in_pair
             if params['show_progress']:
                 self.__print_progress_msg(num_rows_read, 'DONE\n')
-            if last_line_size != '0':
+            if last_line_size != '0':  # pragma: no cover
                 raise RuntimeError(
                     'Connection closed before all data were received!'
                     + ' You may need to break your request into smaller'
