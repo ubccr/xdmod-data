@@ -42,6 +42,34 @@ class DataWarehouse:
         self.__http_requester._tear_down()
         self.__in_runtime_context = False
 
+    def get_resources(
+        self,
+        service_provider=None
+    ):
+        """Get a dictionary containing information about the configured
+           resources in XDMoD.
+
+           Parameters
+           ----------
+           service_provider : str, optional
+               If present then the resource list is filtered to only contain
+               resources associated with the service provider.
+
+           Returns
+           -------
+           dict
+
+           Raises
+           ------
+           KeyError
+               If the `XDMOD_API_TOKEN` environment variable has not been set.
+        """
+        _validator._assert_runtime_context(self.__in_runtime_context)
+
+        response = self.__http_requester._request_resources(service_provider)
+
+        return response
+
     def get_data(
         self,
         duration='Previous month',
