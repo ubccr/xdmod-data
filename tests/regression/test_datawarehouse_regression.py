@@ -108,7 +108,9 @@ def test_get_raw_data(valid_dw, capsys, additional_params, number, csv_title):
         data,
         dtype='string',
         index_col=0,
-        override_default_data=(XDMOD_VERSION == 'xdmod-11-0'),
+        override_default_data=(
+            XDMOD_VERSION in ['xdmod-11-0', 'xdmod-11-0-dev']
+        ),
     )
     assert 'Got ' + number + ' rows...DONE' in capsys.readouterr().out
 
@@ -137,7 +139,9 @@ def test_describe_metrics(valid_dw):
     __assert_descriptor_dfs_equal(
         'jobs-metrics.csv',
         valid_dw.describe_metrics('Jobs'),
-        override_default_data=(XDMOD_VERSION == 'xdmod-11-0'),
+        override_default_data=(
+            XDMOD_VERSION in ['xdmod-11-0', 'xdmod-11-0-dev']
+        ),
     )
 
 
@@ -145,7 +149,9 @@ def test_describe_dimensions(valid_dw):
     __assert_descriptor_dfs_equal(
         'jobs-dimensions.csv',
         valid_dw.describe_dimensions('Jobs'),
-        override_default_data=(XDMOD_VERSION == 'xdmod-11-0'),
+        override_default_data=(
+            XDMOD_VERSION in ['xdmod-11-0', 'xdmod-11-0-dev']
+        ),
     )
 
 

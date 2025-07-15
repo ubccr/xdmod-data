@@ -68,7 +68,7 @@ for xdmod_container in $xdmod_containers; do
     fi
     # Update the server hostnames and certificates so the Python containers can
     # make requests to them.
-    docker exec $xdmod_container bash -c "sed -i \"s/localhost/$xdmod_container/g\" /etc/httpd/conf.d/xdmod.conf"
+    docker exec $xdmod_container bash -c "sed -i 's/localhost/$xdmod_container/g' /etc/httpd/conf.d/xdmod.conf"
     # (Re)start the XDMoD-related services.
     docker exec $xdmod_container bash -c '/root/bin/services restart'
     # Copy the 10,000 users file into the container and shred it.
