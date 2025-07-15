@@ -2,16 +2,20 @@
 
 ## v1.1.0 (XXXX-XX-XX)
 
-This release adds support for running the package in a JupyterHub that has a
-service providing JSON Web Tokens for authentication to an Open XDMoD portal.
+This release adds support for running the package in an XDMoD-hosted
+JupyterHub, adds a method for retrieving data about resources (currently
+limited to ACCESS XDMoD but will be available in a future version of Open
+XDMoD), adds a submodule with helper functions for making Jupyter reports, and
+fixes a bug in retrieving raw data.
 
-It is compatible with Open XDMoD version 11.0.x. Use with JupyterHub requires
-Open XDMoD version 11.0.2+.
+It is compatible with Open XDMoD version 11.0.x.
 
 - Remove unnecessary request made when runtime context is entered
   ([\#55](https://github.com/ubccr/xdmod-data/pull/55)).
 - Remove Open XDMoD 10.5 support
   ([\#68](https://github.com/ubccr/xdmod-data/pull/68)).
+- Raise runtime error if raw data stream is closed unexpectedly.
+  ([\#73](https://github.com/ubccr/xdmod-data/pull/73)).
 
 ## v1.0.3 (2025-01-30)
 
