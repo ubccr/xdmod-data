@@ -140,7 +140,7 @@ class _HttpRequester:
                 raise RuntimeError(
                     f'The requested XDMoD portal ({self.__xdmod_host})'
                     + ' is not running a version of XDMoD that supports the'
-                    ' `get_resources` method.'
+                    ' `get_resources` method.',
                 ) from None
             raise
         return result['results']
