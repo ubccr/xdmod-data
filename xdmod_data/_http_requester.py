@@ -148,12 +148,12 @@ class _HttpRequester:
         _validator._assert_runtime_context(self.__in_runtime_context)
         url = self.__xdmod_host + path
         jupyterhub_error_msg = (
-"""
-If running in an XDMoD-hosted JupyterHub, this is likely a server error from
-the JupyterHub. If not running in an XDMoD-hosted JupyterHub, make sure the
-`XDMOD_API_TOKEN` environment variable is set before the `DataWarehouse` is
-constructed; it should be set to a valid API token obtained from the XDMoD
-portal."""
+            'If running in an XDMoD-hosted JupyterHub, this is likely a server'
+            + ' error from the JupyterHub. If not running in an XDMoD-hosted'
+            + ' JupyterHub, make sure the `XDMOD_API_TOKEN` environment'
+            + ' variable is set before the `DataWarehouse` is constructed;'
+            + ' it should be set to a valid API token obtained from the XDMoD'
+            + ' portal.'
         )
         if self.__api_token is not None:
             token = self.__api_token
