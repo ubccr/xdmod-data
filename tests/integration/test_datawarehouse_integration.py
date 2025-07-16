@@ -6,6 +6,7 @@ import pytest
 from xdmod_data.warehouse import DataWarehouse
 
 VALID_XDMOD_HOST = os.environ['XDMOD_HOST']
+XDMOD_VERSION = os.environ['XDMOD_VERSION']
 TOKEN_PATH = '~/.xdmod-data-token'
 INVALID_STR = 'asdlkfjsdlkfisdjkfjd'
 METHOD_PARAMS = {
@@ -453,9 +454,24 @@ def test_trailing_slashes(dw_methods, method):
 
 
 def test_get_resources_invalid_service_provider(dw_methods):
-    result = __run_method(
-        dw_methods,
-        'get_resources',
-        {'service_provider': INVALID_STR},
-    )
-    assert result == []
+    if XDMOD_VERSION == 'xdmod-11-0':
+        with pytest.raises(
+            RuntimeError,
+            match=(
+                'fThe requested XDMoD portal ({VALID_XDMOD_HOST})'
+                + ' is not running a version of XDMoD that supports the'
+                + ' `get_resources` method.'
+            ),
+        ):
+            __run_method(
+                dw_methods,
+                'get_resources',
+                {'service_provider': INVALID_STR},
+            )
+    else:
+        result = __run_method(
+            dw_methods,
+            'get_resources',
+            {'service_provider': INVALID_STR},
+        )
+        assert result == []
