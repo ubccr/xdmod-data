@@ -29,12 +29,15 @@ def test___init___TypeError_xdmod_host():
         DataWarehouse(2)
 
 
-def test__init__RuntimeError():
+def test__init__TypeError():
     xdmod_host = os.environ['XDMOD_HOST']
     del os.environ['XDMOD_HOST']
     with pytest.raises(
-        RuntimeError,
-        match='A DataWarehouse object must be configured with an XDMoD host.',
+        TypeError,
+        match=(
+            '`xdmod_host` parameter or `XDMOD_HOST` environment variable must'
+            + ' be set.'
+        ),
     ):
         DataWarehouse()
     os.environ['XDMOD_HOST'] = xdmod_host
