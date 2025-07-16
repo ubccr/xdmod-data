@@ -133,16 +133,7 @@ def dw_methods_outside_runtime_context():
 
 
 def __get_dw_methods(dw):
-    return {
-        'get_data': dw.get_data,
-        'get_raw_data': dw.get_raw_data,
-        'describe_realms': dw.describe_realms,
-        'describe_metrics': dw.describe_metrics,
-        'describe_dimensions': dw.describe_dimensions,
-        'get_filter_values': dw.get_filter_values,
-        'describe_raw_realms': dw.describe_raw_realms,
-        'describe_raw_fields': dw.describe_raw_fields,
-    }
+    return {method: getattr(dw, method) for method in METHOD_PARAMS}
 
 
 def __run_method(dw_methods, method, additional_params={}):
