@@ -128,6 +128,7 @@ class _HttpRequester:
     def _request_resources(self, service_provider):
         url_params = ''
         if service_provider is not None:
+            self.__assert_str('service_provider', service_provider)
             url_params = '?' + urlencode({
                 'service_provider': service_provider,
             })

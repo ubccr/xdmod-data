@@ -414,6 +414,8 @@ class DataWarehouse:
            ------
            RuntimeError
                If this method is called outside the runtime context.
+           TypeError
+               If `service_provider` is provided and is not a string.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
         return self.__http_requester._request_resources(service_provider)
