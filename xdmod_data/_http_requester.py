@@ -161,7 +161,9 @@ class _HttpRequester:
             try:
                 token = self.__request_json_web_token()
             except RuntimeError as e:
-                raise RuntimeError(str(e) + jupyterhub_error_msg) from None
+                raise RuntimeError(
+                    str(e) + ' ' + jupyterhub_error_msg,
+                ) from None
         headers = {
             **self.__headers,
             **{
@@ -266,9 +268,7 @@ class _HttpRequester:
         jupyterhub_api_token = os.getenv('JUPYTERHUB_API_TOKEN')
         jupyterhub_jwt_url = os.getenv('JUPYTERHUB_JWT_URL')
         if jupyterhub_api_token is None or jupyterhub_jwt_url is None:
-            raise RuntimeError(
-                'External authentication mechanism not configured.',
-            )
+            raise RuntimeError('Authentication failed.')
         try:
             headers = {
                 **self.__headers,
