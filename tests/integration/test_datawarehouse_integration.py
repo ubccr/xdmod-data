@@ -140,7 +140,19 @@ def __get_dw_methods(dw):
 
 def __run_method(dw_methods, method, additional_params={}):
     params = {**default_valid_params[method], **additional_params}
-    return dw_methods[method](**params)
+    # get_resources is not supported in 11.0 < 11.0.2.
+    if method == 'get_resources' and XDMOD_VERSION == 'xdmod-11-0':
+        with pytest.raises(
+            RuntimeError,
+            match=re.escape(
+                f'The requested XDMoD portal ({VALID_XDMOD_HOST})'
+                + ' is not running a version of XDMoD that supports the'
+                + ' `get_resources` method.',
+            ),
+        ):
+            dw_methods[method](**params)
+    else:
+        return dw_methods[method](**params)
 
 
 def __test_exception(dw_methods, method, additional_params, error, match):
@@ -455,24 +467,11 @@ def test_trailing_slashes(dw_methods, method):
 
 
 def test_get_resources_invalid_service_provider(dw_methods):
-    if XDMOD_VERSION == 'xdmod-11-0':
-        with pytest.raises(
-            RuntimeError,
-            match=re.escape(
-                f'The requested XDMoD portal ({VALID_XDMOD_HOST})'
-                + ' is not running a version of XDMoD that supports the'
-                + ' `get_resources` method.',
-            ),
-        ):
-            __run_method(
-                dw_methods,
-                'get_resources',
-                {'service_provider': INVALID_STR},
-            )
-    else:
-        result = __run_method(
-            dw_methods,
-            'get_resources',
-            {'service_provider': INVALID_STR},
-        )
+    result = __run_method(
+        dw_methods,
+        'get_resources',
+        {'service_provider': INVALID_STR},
+    )
+    # get_resources is not supported in 11.0 < 11.0.2.
+    if XDMOD_VERSION != 'xdmod-11-0':
         assert result == []
