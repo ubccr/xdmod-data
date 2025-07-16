@@ -31,6 +31,7 @@ METHOD_PARAMS = {
     'get_filter_values': ('realm', 'dimension'),
     'describe_raw_realms': (),
     'describe_raw_fields': ('realm',),
+    'get_resources': ('service_provider',),
 }
 VALID_DATE = '2016-12-25'
 VALID_DIMENSION = 'Resource'
@@ -45,6 +46,7 @@ VALID_VALUES = {
   'parameter': 'duration',
   'fields': ['Nodes'],
   'show_progress': False,
+  'service_provider': 'screw',
 }
 KEY_ERROR_TEST_VALUES_AND_MATCHES = {
     'duration': (INVALID_STR, 'Invalid value for `duration`'),
