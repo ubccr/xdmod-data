@@ -20,8 +20,8 @@ def set_environ():
     os.environ['XDMOD_API_TOKEN'] = token
 
 
-def test__init__xdmod_host_environment_variable():
-    DataWarehouse()
+def test___init___valid_xdmod_host():
+    DataWarehouse(VALID_XDMOD_HOST)
 
 
 def test___init___TypeError_xdmod_host():
@@ -29,7 +29,7 @@ def test___init___TypeError_xdmod_host():
         DataWarehouse(2)
 
 
-def test__init__TypeError():
+def test___init___TypeError():
     xdmod_host = os.environ['XDMOD_HOST']
     del os.environ['XDMOD_HOST']
     with pytest.raises(
@@ -83,10 +83,10 @@ def test___enter___RuntimeError_401():
         match='Error 401: Make sure XDMOD_API_TOKEN is set'
         + ' to a valid API token.',
     ):
-        with DataWarehouse(VALID_XDMOD_HOST) as dw:
+        with DataWarehouse() as dw:
             dw.describe_realms()
 
 
 def test_exit_without_enter():
-    dw = DataWarehouse(VALID_XDMOD_HOST)
+    dw = DataWarehouse()
     dw.__exit__(None, None, None)
