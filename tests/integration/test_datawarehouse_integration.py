@@ -458,7 +458,7 @@ def test_get_resources_invalid_service_provider(dw_methods):
         with pytest.raises(
             RuntimeError,
             match=(
-                'fThe requested XDMoD portal ({VALID_XDMOD_HOST})'
+                f'The requested XDMoD portal ({VALID_XDMOD_HOST})'
                 + ' is not running a version of XDMoD that supports the'
                 + ' `get_resources` method.'
             ),
