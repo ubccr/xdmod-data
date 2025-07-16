@@ -3,6 +3,7 @@ import os
 import pandas
 from pathlib import Path
 import pytest
+import re
 from xdmod_data.warehouse import DataWarehouse
 
 VALID_XDMOD_HOST = os.environ['XDMOD_HOST']
@@ -457,10 +458,10 @@ def test_get_resources_invalid_service_provider(dw_methods):
     if XDMOD_VERSION == 'xdmod-11-0':
         with pytest.raises(
             RuntimeError,
-            match=(
+            match=re.escape(
                 f'The requested XDMoD portal ({VALID_XDMOD_HOST})'
                 + ' is not running a version of XDMoD that supports the'
-                + ' `get_resources` method.'
+                + ' `get_resources` method.',
             ),
         ):
             __run_method(
