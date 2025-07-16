@@ -131,9 +131,18 @@ class _HttpRequester:
             url_params = '?' + urlencode({
                 'service_provider': service_provider,
             })
-        result = self._request_json(
-            path='/rest/v1/warehouse/resources' + url_params,
-        )
+        try:
+            result = self._request_json(
+                path='/rest/v1/warehouse/resources' + url_params,
+            )
+        except RuntimeError as e:
+            if 'Error 404' in str(e):
+                raise RuntimeError(
+                    f'The requested XDMoD portal ({self.__xdmod_host})'
+                    + ' is not running a version of XDMoD that supports the'
+                    ' `get_resources` method.'
+                ) from None
+            raise
         return result['results']
 
     def _request_json(self, path, post_fields=None):

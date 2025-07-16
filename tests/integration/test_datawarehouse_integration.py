@@ -450,3 +450,12 @@ def test_case_insensitive(dw_methods, method, param, value1, value2):
 )
 def test_trailing_slashes(dw_methods, method):
     __run_method(dw_methods, method)
+
+
+def test_get_resources_invalid_service_provider(dw_methods):
+    result = __run_method(
+        dw_methods,
+        'get_resources',
+        {'service_provider': INVALID_STR},
+    )
+    assert result == []
