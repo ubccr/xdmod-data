@@ -147,12 +147,13 @@ class _HttpRequester:
     def __request(self, path='', post_fields=None, stream=False):
         _validator._assert_runtime_context(self.__in_runtime_context)
         url = self.__xdmod_host + path
-        token_error_msg = (
-            'If running in JupyterHub connected with XDMoD, this is likely an'
-            + ' error with the JupyterHub. Otherwise, make sure the'
-            + ' `XDMOD_API_TOKEN` environment variable is set before the'
-            + ' `DataWarehouse` is constructed; it should be set to a valid'
-            + ' API token obtained from the XDMoD web portal.'
+        jupyterhub_error_msg = (
+"""
+If running in an XDMoD-hosted JupyterHub, this is likely a server error from
+the JupyterHub. If not running in an XDMoD-hosted JupyterHub, make sure the
+`XDMOD_API_TOKEN` environment variable is set before the `DataWarehouse` is
+constructed; it should be set to a valid API token obtained from the XDMoD
+portal."""
         )
         if self.__api_token is not None:
             token = self.__api_token
@@ -160,9 +161,7 @@ class _HttpRequester:
             try:
                 token = self.__request_json_web_token()
             except RuntimeError as e:
-                raise RuntimeError(
-                    token_error_msg + str(e),
-                ) from None
+                raise RuntimeError(str(e) + jupyterhub_error_msg) from None
         headers = {
             **self.__headers,
             **{
@@ -197,7 +196,10 @@ class _HttpRequester:
                     ': Make sure XDMOD_API_TOKEN is set to a valid API token.'
                 )
             raise RuntimeError(
-                'Error ' + str(response.status_code) + msg,
+                'Error '
+                + str(response.status_code)
+                + msg
+                + jupyterhub_error_msg
             ) from None
         return response
 
@@ -263,9 +265,9 @@ class _HttpRequester:
     def __request_json_web_token(self):  # pragma: no cover
         jupyterhub_api_token = os.getenv('JUPYTERHUB_API_TOKEN')
         jupyterhub_jwt_url = os.getenv('JUPYTERHUB_JWT_URL')
-        if not jupyterhub_api_token or not jupyterhub_jwt_url:
+        if jupyterhub_api_token is None or jupyterhub_jwt_url is None:
             raise RuntimeError(
-                'Error: External authentication mechanism not configured.',
+                'External authentication mechanism not configured.',
             )
         try:
             headers = {
