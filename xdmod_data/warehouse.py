@@ -48,7 +48,7 @@ class DataWarehouse:
             if xdmod_host is None:
                 raise TypeError(
                     '`xdmod_host` parameter or `XDMOD_HOST` environment'
-                    + ' variable must be set.'
+                    + ' variable must be set.',
                 ) from None
         self.__http_requester = _HttpRequester(xdmod_host)
         self.__descriptors = _Descriptors(self.__http_requester)

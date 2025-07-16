@@ -199,7 +199,7 @@ portal."""
                 'Error '
                 + str(response.status_code)
                 + msg
-                + jupyterhub_error_msg
+                + jupyterhub_error_msg,
             ) from None
         return response
 
