@@ -138,10 +138,19 @@ def __get_dw_methods(dw):
     return {method: getattr(dw, method) for method in METHOD_PARAMS}
 
 
-def __run_method(dw_methods, method, additional_params={}):
+def __run_method(
+    dw_methods,
+    method,
+    additional_params={},
+    testing_exception=False,
+):
     params = {**default_valid_params[method], **additional_params}
     # get_resources is not supported in 11.0 < 11.0.2.
-    if method == 'get_resources' and XDMOD_VERSION == 'xdmod-11-0':
+    if (
+        method == 'get_resources'
+        and XDMOD_VERSION == 'xdmod-11-0'
+        and not testing_exception
+    ):
         with pytest.raises(
             RuntimeError,
             match=re.escape(
@@ -157,7 +166,12 @@ def __run_method(dw_methods, method, additional_params={}):
 
 def __test_exception(dw_methods, method, additional_params, error, match):
     with pytest.raises(error, match=match):
-        __run_method(dw_methods, method, additional_params)
+        __run_method(
+            dw_methods,
+            method,
+            additional_params,
+            testing_exception=True
+        )
 
 
 @pytest.mark.parametrize(
