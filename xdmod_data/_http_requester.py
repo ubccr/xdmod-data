@@ -181,7 +181,7 @@ class _HttpRequester:
             url += 'Bearer=' + token
             response = self.__requests_session.get(
                 url,
-                headers=self.__headers,
+                headers=headers,
                 stream=stream,
             )
         if response.status_code != 200:
