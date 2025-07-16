@@ -170,7 +170,7 @@ def __test_exception(dw_methods, method, additional_params, error, match):
             dw_methods,
             method,
             additional_params,
-            testing_exception=True
+            testing_exception=True,
         )
 
 
