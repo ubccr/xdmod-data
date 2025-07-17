@@ -21,7 +21,7 @@ It is compatible with Open XDMoD version 11.0.x.
   ([\#84](https://github.com/ubccr/xdmod-data/pull/84)).
 - Add report module ([\#86](https://github.com/ubccr/xdmod-data/pull/86)).
 
-## v1.1.0 (XXXX-XX-XX)
+## v1.1.0 (2025-07-17)
 
 This release adds support for running the package in an XDMoD-hosted
 JupyterHub, adds a method for retrieving data about resources (currently
