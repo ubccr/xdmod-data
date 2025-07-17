@@ -26,7 +26,7 @@ It is compatible with Open XDMoD version 11.0.x.
 This release fixes a `ValueError` that occurs with the Plotly `timeseries`
 template.
 
-It is compatible with Open XDMoD versions 11.0.x and 10.5.x.
+It is compatible with Open XDMoD versions 11.0.1, 11.0.0, and 10.5.x.
 
 - Implement 100% test coverage
   ([\#45](https://github.com/ubccr/xdmod-data/pull/45)).
@@ -44,7 +44,7 @@ It is compatible with Open XDMoD versions 11.0.x and 10.5.x.
 This release fixes an `IOPub` error that can occur when calling
 `get_raw_data()` with `show_progress=True`.
 
-It is compatible with Open XDMoD versions 11.0.x and 10.5.x.
+It is compatible with Open XDMoD versions 11.0.1, 11.0.0, and 10.5.x.
 
 - Document Open XDMoD compatibility in changelog
   ([\#31](https://github.com/ubccr/xdmod-data/pull/31)).
@@ -56,7 +56,7 @@ It is compatible with Open XDMoD versions 11.0.x and 10.5.x.
 This release has bug fixes, performance improvements, and updates for
 compatibility, tests, and documentation.
 
-It is compatible with Open XDMoD versions 11.0.x and 10.5.x.
+It is compatible with Open XDMoD versions 11.0.1, 11.0.0, and 10.5.x.
 
 - Add borders to README images
   ([\#12](https://github.com/ubccr/xdmod-data/pull/12)).
