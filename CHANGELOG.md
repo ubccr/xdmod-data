@@ -1,11 +1,32 @@
 # xdmod-data Changelog
 
+## v1.1.0 (2025-07-17)
+
+This release adds support for running the package in an XDMoD-hosted
+JupyterHub, adds a method for retrieving data about resources (from XDMoD
+portals running version 11.0.2 or greater), adds a module with helper functions
+for making Jupyter reports, and fixes a bug in retrieving raw data.
+
+It is compatible with Open XDMoD version 11.0.x.
+
+- Remove unnecessary request made when runtime context is entered
+  ([\#55](https://github.com/ubccr/xdmod-data/pull/55)).
+- Remove Open XDMoD 10.5 support
+  ([\#68](https://github.com/ubccr/xdmod-data/pull/68)).
+- Raise runtime error if raw data stream is closed unexpectedly.
+  ([\#73](https://github.com/ubccr/xdmod-data/pull/73)).
+- Add `get_resources` method to the API
+  ([\#81](https://github.com/ubccr/xdmod-data/pull/81)).
+- Add support for running in an XDMoD-hosted JupyterHub
+  ([\#76](https://github.com/ubccr/xdmod-data/pull/76)).
+- Add report module ([\#85](https://github.com/ubccr/xdmod-data/pull/85)).
+
 ## v1.0.3 (2025-01-30)
 
-This release fixes a `ValueError` error that occurs with the Plotly
-`timeseries` template.
+This release fixes a `ValueError` that occurs with the Plotly `timeseries`
+template.
 
-It is compatible with Open XDMoD versions 11.0.x and 10.5.x.
+It is compatible with Open XDMoD versions 11.0.1, 11.0.0, and 10.5.x.
 
 - Implement 100% test coverage
   ([\#45](https://github.com/ubccr/xdmod-data/pull/45)).
@@ -23,7 +44,7 @@ It is compatible with Open XDMoD versions 11.0.x and 10.5.x.
 This release fixes an `IOPub` error that can occur when calling
 `get_raw_data()` with `show_progress=True`.
 
-It is compatible with Open XDMoD versions 11.0.x and 10.5.x.
+It is compatible with Open XDMoD versions 11.0.1, 11.0.0, and 10.5.x.
 
 - Document Open XDMoD compatibility in changelog
   ([\#31](https://github.com/ubccr/xdmod-data/pull/31)).
@@ -35,7 +56,7 @@ It is compatible with Open XDMoD versions 11.0.x and 10.5.x.
 This release has bug fixes, performance improvements, and updates for
 compatibility, tests, and documentation.
 
-It is compatible with Open XDMoD versions 11.0.x and 10.5.x.
+It is compatible with Open XDMoD versions 11.0.1, 11.0.0, and 10.5.x.
 
 - Add borders to README images
   ([\#12](https://github.com/ubccr/xdmod-data/pull/12)).

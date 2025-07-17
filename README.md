@@ -26,10 +26,11 @@ Example usage is documented through Jupyter notebooks in the
 Specific versions of this package are compatible with specific versions of Open
 XDMoD as indicated in the table below.
 
-| `xdmod-data` version | Open XDMoD versions |
-| -------------------- | ------------------- |
-| 1.0.3, 1.0.2, 1.0.1  | 11.0.x, 10.5.x      |
-| 1.0.0                | 10.5.x              |
+| `xdmod-data` versions | Open XDMoD versions    |
+| --------------------- | ---------------------- |
+| 1.1.0                 | 11.0.x                 |
+| 1.0.3, 1.0.2, 1.0.1   | 11.0.1, 11.0.0, 10.5.x |
+| 1.0.0                 | 10.5.x                 |
 
 ## API Token Access
 
