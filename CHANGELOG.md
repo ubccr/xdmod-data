@@ -24,10 +24,9 @@ It is compatible with Open XDMoD version 11.0.x.
 ## v1.1.0 (2025-07-17)
 
 This release adds support for running the package in an XDMoD-hosted
-JupyterHub, adds a method for retrieving data about resources (currently
-limited to ACCESS XDMoD but will be available in a future version of Open
-XDMoD), adds a module with helper functions for making Jupyter reports, and
-fixes a bug in retrieving raw data.
+JupyterHub, adds a method for retrieving data about resources (from XDMoD
+portals running version 11.0.2 or greater), adds a module with helper functions
+for making Jupyter reports, and fixes a bug in retrieving raw data.
 
 It is compatible with Open XDMoD version 11.0.x.
 
