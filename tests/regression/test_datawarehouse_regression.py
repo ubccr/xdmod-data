@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 from xdmod_data.warehouse import DataWarehouse
 
-XDMOD_HOST = os.environ['XDMOD_HOST']
 XDMOD_VERSION = os.environ['XDMOD_VERSION']
 TOKEN_PATH = '~/.xdmod-data-token'
 
@@ -23,7 +22,7 @@ pandas.set_option('display.max_colwidth', None)
 
 @pytest.fixture(scope='module')
 def valid_dw():
-    with DataWarehouse(XDMOD_HOST) as dw:
+    with DataWarehouse() as dw:
         yield dw
 
 

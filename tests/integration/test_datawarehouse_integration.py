@@ -130,7 +130,7 @@ def dw_methods(request):
 
 @pytest.fixture(scope='module')
 def dw_methods_outside_runtime_context():
-    dw = DataWarehouse(VALID_XDMOD_HOST)
+    dw = DataWarehouse()
     return __get_dw_methods(dw)
 
 

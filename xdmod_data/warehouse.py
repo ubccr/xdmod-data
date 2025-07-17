@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import pandas as pd
 from xdmod_data._descriptors import _Descriptors
 from xdmod_data._http_requester import _HttpRequester
@@ -7,29 +8,48 @@ import xdmod_data._validator as _validator
 
 
 class DataWarehouse:
-    """Request data from an XDMoD data warehouse via the XDMoD REST API.
+    """Request data from the data warehouse of an XDMoD portal via the XDMoD
+       REST API.
 
        Methods must be called within a runtime context using the ``with``
        keyword, e.g.,
 
-       >>> with DataWarehouse('https://xdmod.access-ci.org') as dw:
+       >>> with DataWarehouse() as dw:
        ...     dw.get_data()
+
+       If running in an XDMoD-hosted JupyterHub, authentication will happen
+       automatically when requests are made. If not running in an XDMoD-hosted
+       JupyterHub, before constructing the `DataWarehouse`, the
+       `XDMOD_API_TOKEN` environment variable must be set to an API token
+       obtained from the XDMoD portal.
 
        Parameters
        ----------
-       xdmod_host : str
-           The URL of the XDMoD server.
+       xdmod_host : str, optional
+           The URL of the XDMoD portal from which data will be requested.
+           Defaults to None, in which case the URL will instead be obtained
+           from the `XDMOD_HOST` environment variable; if running in an
+           XDMoD-hosted JupyterHub, this environment variable is set
+           automatically. If not running in an XDMoD-hosted JupyterHub, or to
+           get data from a different XDMoD portal, `xdmod_host` must be
+           specified.
 
        Raises
        ------
-       KeyError
-           If the `XDMOD_API_TOKEN` environment variable has not been set.
        TypeError
-           If `xdmod_host` is not a string.
+           If the `xdmod_host` parameter and `XDMOD_HOST` environment variable
+           are both not set or if `xdmod_host` is set and is not a string.
     """
 
-    def __init__(self, xdmod_host):
+    def __init__(self, xdmod_host=None):
         self.__in_runtime_context = False
+        if xdmod_host is None:
+            xdmod_host = os.getenv('XDMOD_HOST')
+            if xdmod_host is None:
+                raise TypeError(
+                    '`xdmod_host` parameter or `XDMOD_HOST` environment'
+                    + ' variable must be set.',
+                ) from None
         self.__http_requester = _HttpRequester(xdmod_host)
         self.__descriptors = _Descriptors(self.__http_requester)
 
@@ -213,7 +233,8 @@ class DataWarehouse:
            Raises
            ------
            RuntimeError
-               If this method is called outside the runtime context.
+               If this method is called outside the runtime context or if
+               there is an error requesting data from the warehouse.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
         return self.__get_data_frame_from_descriptor(
@@ -242,7 +263,8 @@ class DataWarehouse:
            KeyError
                If `realm` is not one of the values from `describe_realms()`.
            RuntimeError
-               If this method is called outside the runtime context.
+               If this method is called outside the runtime context or if
+               there is an error requesting data from the warehouse.
            TypeError
                If `realm` is not a string.
         """
@@ -269,7 +291,8 @@ class DataWarehouse:
            KeyError
                If `realm` is not one of the values from `describe_realms()`.
            RuntimeError
-               If this method is called outside the runtime context.
+               If this method is called outside the runtime context or if
+               there is an error requesting data from the warehouse.
            TypeError
                If `realm` is not a string.
         """
@@ -301,7 +324,8 @@ class DataWarehouse:
                `dimension` is not one of the IDs or labels from
                `describe_dimensions()`.
            RuntimeError
-               If this method is called outside the runtime context.
+               If this method is called outside the runtime context or if
+               there is an error requesting data from the warehouse.
            TypeError
                If `realm` or `dimension` are not strings.
         """
@@ -353,7 +377,8 @@ class DataWarehouse:
            Raises
            ------
            RuntimeError
-               If this method is called outside the runtime context.
+               If this method is called outside the runtime context or if
+               there is an error requesting data from the warehouse.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
         return self.__get_data_frame_from_descriptor(
@@ -383,7 +408,8 @@ class DataWarehouse:
                If `realm` is not one of the values from
                `describe_raw_realms()`.
            RuntimeError
-               If this method is called outside the runtime context.
+               If this method is called outside the runtime context or if
+               there is an error requesting data from the warehouse.
            TypeError
                If `realm` is not a string.
         """
