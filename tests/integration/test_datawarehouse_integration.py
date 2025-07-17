@@ -3,9 +3,11 @@ import os
 import pandas
 from pathlib import Path
 import pytest
+import re
 from xdmod_data.warehouse import DataWarehouse
 
 VALID_XDMOD_HOST = os.environ['XDMOD_HOST']
+XDMOD_VERSION = os.environ['XDMOD_VERSION']
 TOKEN_PATH = '~/.xdmod-data-token'
 INVALID_STR = 'asdlkfjsdlkfisdjkfjd'
 METHOD_PARAMS = {
@@ -31,6 +33,7 @@ METHOD_PARAMS = {
     'get_filter_values': ('realm', 'dimension'),
     'describe_raw_realms': (),
     'describe_raw_fields': ('realm',),
+    'get_resources': ('service_provider',),
 }
 VALID_DATE = '2016-12-25'
 VALID_DIMENSION = 'Resource'
@@ -45,6 +48,7 @@ VALID_VALUES = {
   'parameter': 'duration',
   'fields': ['Nodes'],
   'show_progress': False,
+  'service_provider': 'screw',
 }
 KEY_ERROR_TEST_VALUES_AND_MATCHES = {
     'duration': (INVALID_STR, 'Invalid value for `duration`'),
@@ -131,26 +135,43 @@ def dw_methods_outside_runtime_context():
 
 
 def __get_dw_methods(dw):
-    return {
-        'get_data': dw.get_data,
-        'get_raw_data': dw.get_raw_data,
-        'describe_realms': dw.describe_realms,
-        'describe_metrics': dw.describe_metrics,
-        'describe_dimensions': dw.describe_dimensions,
-        'get_filter_values': dw.get_filter_values,
-        'describe_raw_realms': dw.describe_raw_realms,
-        'describe_raw_fields': dw.describe_raw_fields,
-    }
+    return {method: getattr(dw, method) for method in METHOD_PARAMS}
 
 
-def __run_method(dw_methods, method, additional_params={}):
+def __run_method(
+    dw_methods,
+    method,
+    additional_params={},
+    testing_exception=False,
+):
     params = {**default_valid_params[method], **additional_params}
-    return dw_methods[method](**params)
+    # get_resources is not supported in XDMoD < 11.0.2.
+    if (
+        method == 'get_resources'
+        and XDMOD_VERSION == 'xdmod-11-0'
+        and not testing_exception
+    ):
+        with pytest.raises(
+            RuntimeError,
+            match=re.escape(
+                f'The requested XDMoD portal ({VALID_XDMOD_HOST})'
+                + ' is not running a version of XDMoD that supports the'
+                + ' `get_resources` method.',
+            ),
+        ):
+            dw_methods[method](**params)
+    else:
+        return dw_methods[method](**params)
 
 
 def __test_exception(dw_methods, method, additional_params, error, match):
     with pytest.raises(error, match=match):
-        __run_method(dw_methods, method, additional_params)
+        __run_method(
+            dw_methods,
+            method,
+            additional_params,
+            testing_exception=True,
+        )
 
 
 @pytest.mark.parametrize(
@@ -457,3 +478,14 @@ def test_case_insensitive(dw_methods, method, param, value1, value2):
 )
 def test_trailing_slashes(dw_methods, method):
     __run_method(dw_methods, method)
+
+
+def test_get_resources_invalid_service_provider(dw_methods):
+    result = __run_method(
+        dw_methods,
+        'get_resources',
+        {'service_provider': INVALID_STR},
+    )
+    # get_resources is not supported in XDMoD < 11.0.2.
+    if XDMOD_VERSION != 'xdmod-11-0':
+        assert result == []

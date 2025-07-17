@@ -1,5 +1,6 @@
 from datetime import date
 from dotenv import load_dotenv
+import json
 import numpy
 import os
 import pandas
@@ -34,15 +35,8 @@ def __assert_dfs_equal(
     columns_name=None,
     override_default_data=False,
 ):
-    data_dir = os.path.dirname(__file__) + '/data/' + (
-        XDMOD_VERSION if override_default_data
-        else 'default'
-    )
+    data_dir = __get_data_dir(override_default_data)
     if 'GENERATE_DATA_FILES' in os.environ:  # pragma: no cover
-        try:
-            os.mkdir(data_dir)
-        except FileExistsError:
-            pass
         actual.to_csv(data_dir + '/' + data_file)
     else:
         expected = pandas.read_csv(
@@ -59,6 +53,19 @@ def __assert_dfs_equal(
         assert expected.equals(actual), (
             '\nEXPECTED:\n' + str(expected) + '\nACTUAL:\n' + str(actual)
         )
+
+
+def __get_data_dir(override_default_data=False):
+    data_dir = os.path.dirname(__file__) + '/data/' + (
+        XDMOD_VERSION if override_default_data
+        else 'default'
+    )
+    if 'GENERATE_DATA_FILES' in os.environ:  # pragma: no cover
+        try:
+            os.mkdir(data_dir)
+        except FileExistsError:
+            pass
+    return data_dir
 
 
 @pytest.mark.parametrize(
@@ -231,3 +238,14 @@ def test_get_durations(valid_dw):
         expected_durations.append(year)
     actual_durations = list(valid_dw.get_durations())
     assert expected_durations == actual_durations
+
+
+@pytest.mark.parametrize(
+    'service_provider', [[None], ['screw']],
+)
+def test_get_resources(valid_dw, service_provider):
+    # get_resources is not supported in XDMoD < 11.0.2.
+    if XDMOD_VERSION != 'xdmod-11-0':
+        with open(__get_data_dir() + '/' + 'resources.json') as data_file:
+            data = json.load(data_file)
+        assert data == valid_dw.get_resources()
