@@ -37,6 +37,10 @@ It is compatible with Open XDMoD version 11.0.x.
   ([\#75](https://github.com/ubccr/xdmod-data/pull/75)).
 - Raise runtime error if raw data stream is closed unexpectedly.
   ([\#80](https://github.com/ubccr/xdmod-data/pull/80)).
+- Add `get_resources` method to the API
+  ([\#83](https://github.com/ubccr/xdmod-data/pull/83)).
+- Add support for running in an XDMoD-hosted JupyterHub
+  ([\#84](https://github.com/ubccr/xdmod-data/pull/84)).
 
 ## v1.0.3 (2025-01-30)
 
