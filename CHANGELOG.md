@@ -16,6 +16,8 @@ It is compatible with Open XDMoD version 11.0.x.
   ([\#68](https://github.com/ubccr/xdmod-data/pull/68)).
 - Raise runtime error if raw data stream is closed unexpectedly.
   ([\#73](https://github.com/ubccr/xdmod-data/pull/73)).
+- Add `get_resources` method to the API
+  ([\#81](https://github.com/ubccr/xdmod-data/pull/81)).
 
 ## v1.0.3 (2025-01-30)
 
