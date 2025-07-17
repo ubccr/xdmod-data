@@ -20,8 +20,8 @@ class DataWarehouse:
        If running in an XDMoD-hosted JupyterHub, authentication will happen
        automatically when requests are made. If not running in an XDMoD-hosted
        JupyterHub, before constructing the `DataWarehouse`, the
-       `XDMOD_API_TOKEN` environment variable will need to be set to an API
-       token obtained from the XDMoD portal.
+       `XDMOD_API_TOKEN` environment variable must be set to an API token
+       obtained from the XDMoD portal.
 
        Parameters
        ----------
