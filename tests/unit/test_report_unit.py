@@ -1,4 +1,5 @@
 from IPython.display import Markdown, HTML
+import pytest
 from xdmod_data.report import set_styles, header, footer
 
 
