@@ -8,6 +8,11 @@ def test_set_styles():
     assert isinstance(style_html, HTML)
 
 
+def test_header():
+    header_html = header()
+    assert isinstance(header_html, HTML)
+
+
 @pytest.mark.parametrize(
     'docmeta',
     [
@@ -35,11 +40,6 @@ def test_set_styles():
     ],
     ids=['without_docmeta', 'with_docmeta'],
 )
-def test_header(docmeta):
-    header_html = header(docmeta)
-    assert isinstance(header_html, HTML)
-
-
-def test_footer():
-    footer_markdown = footer()
+def test_footer(docmeta):
+    footer_markdown = footer(docmeta)
     assert isinstance(footer_markdown, Markdown)
