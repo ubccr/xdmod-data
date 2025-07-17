@@ -1,4 +1,4 @@
-from IPython.display import HTML
+from IPython.display import Markdown, HTML
 from xdmod_data.report import set_styles, header, footer
 
 
@@ -13,5 +13,5 @@ def test_header():
 
 
 def test_footer():
-    footer_html = footer()
-    assert isinstance(footer_html, HTML)
+    footer_markdown = footer()
+    assert isinstance(footer_markdown, Markdown)
