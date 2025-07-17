@@ -282,6 +282,6 @@ class _HttpRequester:
             json_web_token = r.text.strip()
         except requests.exceptions.RequestException as e:
             raise RuntimeError(
-                'Error while obtaining authentication token: ' + str(e),
+                'Error while obtaining authentication token: ' + str(e) + '.',
             )
         return json_web_token
