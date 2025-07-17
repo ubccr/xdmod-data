@@ -18,6 +18,8 @@ It is compatible with Open XDMoD version 11.0.x.
   ([\#73](https://github.com/ubccr/xdmod-data/pull/73)).
 - Add `get_resources` method to the API
   ([\#81](https://github.com/ubccr/xdmod-data/pull/81)).
+- Add support for running in an XDMoD-hosted JupyterHub
+  ([\#76](https://github.com/ubccr/xdmod-data/pull/76)).
 
 ## v1.0.3 (2025-01-30)
 
