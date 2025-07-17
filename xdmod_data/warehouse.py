@@ -31,7 +31,7 @@ class DataWarehouse:
            from the `XDMOD_HOST` environment variable; if running in an
            XDMoD-hosted JupyterHub, this environment variable is set
            automatically. If not running in an XDMoD-hosted JupyterHub, or to
-           get data from a different XDMoD portal, this value will need to be
+           get data from a different XDMoD portal, `xdmod_host` must be
            specified.
 
        Raises
