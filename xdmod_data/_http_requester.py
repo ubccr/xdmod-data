@@ -13,14 +13,8 @@ class _HttpRequester:
         _validator._assert_str('xdmod_host', xdmod_host)
         xdmod_host = re.sub('/+$', '', xdmod_host)
         self.__xdmod_host = xdmod_host
-        try:
-            self.__api_token = os.environ['XDMOD_API_TOKEN']
-        except KeyError:
-            raise KeyError(
-                '`XDMOD_API_TOKEN` environment variable has not been set.',
-            ) from None
+        self.__api_token = os.getenv('XDMOD_API_TOKEN')
         self.__headers = {
-            'Authorization': 'Bearer ' + self.__api_token,
             'User-Agent': __title__ + ' Python v' + __version__,
         }
         self.__requests_session = None
@@ -125,6 +119,27 @@ class _HttpRequester:
             offset += limit
         return data
 
+    def _request_resources(self, service_provider):
+        url_params = ''
+        if service_provider is not None:
+            _validator._assert_str('service_provider', service_provider)
+            url_params = '?' + urlencode({
+                'service_provider': service_provider,
+            })
+        try:
+            result = self._request_json(
+                path='/rest/v1/warehouse/resources' + url_params,
+            )
+        except RuntimeError as e:
+            if 'Error 404' in str(e):
+                raise RuntimeError(
+                    f'The requested XDMoD portal ({self.__xdmod_host})'
+                    + ' is not running a version of XDMoD that supports the'
+                    ' `get_resources` method.',
+                ) from None
+            raise  # pragma: no cover
+        return result['results']
+
     def _request_json(self, path, post_fields=None):
         response = self.__request(path, post_fields)
         return json.loads(response.text)
@@ -132,20 +147,43 @@ class _HttpRequester:
     def __request(self, path='', post_fields=None, stream=False):
         _validator._assert_runtime_context(self.__in_runtime_context)
         url = self.__xdmod_host + path
+        jupyterhub_error_msg = (
+            'If running in an XDMoD-hosted JupyterHub, this is likely a server'
+            + ' error from the JupyterHub. If not running in an XDMoD-hosted'
+            + ' JupyterHub, make sure the `XDMOD_API_TOKEN` environment'
+            + ' variable is set before the `DataWarehouse` is constructed;'
+            + ' it should be set to a valid API token obtained from the XDMoD'
+            + ' portal.'
+        )
+        if self.__api_token is not None:
+            token = self.__api_token
+        else:  # pragma: no cover
+            try:
+                token = self.__request_json_web_token()
+            except RuntimeError as e:
+                raise RuntimeError(
+                    str(e) + ' ' + jupyterhub_error_msg,
+                ) from None
+        headers = {
+            **self.__headers,
+            **{
+                'Authorization': 'Bearer ' + token,
+            },
+        }
         if post_fields:
-            post_fields['Bearer'] = self.__api_token
+            post_fields['Bearer'] = token
             response = self.__requests_session.post(
                 url,
-                headers=self.__headers,
+                headers=headers,
                 data=post_fields,
                 stream=stream,
             )
         else:
             url += '&' if '?' in url else '?'
-            url += 'Bearer=' + self.__api_token
+            url += 'Bearer=' + token
             response = self.__requests_session.get(
                 url,
-                headers=self.__headers,
+                headers=headers,
                 stream=stream,
             )
         if response.status_code != 200:
@@ -160,7 +198,10 @@ class _HttpRequester:
                     ': Make sure XDMOD_API_TOKEN is set to a valid API token.'
                 )
             raise RuntimeError(
-                'Error ' + str(response.status_code) + msg,
+                'Error '
+                + str(response.status_code)
+                + msg
+                + jupyterhub_error_msg,
             ) from None
         return response
 
@@ -222,3 +263,25 @@ class _HttpRequester:
             + '...'
         )
         print(progress_msg, end=end)
+
+    def __request_json_web_token(self):  # pragma: no cover
+        jupyterhub_api_token = os.getenv('JUPYTERHUB_API_TOKEN')
+        jupyterhub_jwt_url = os.getenv('JUPYTERHUB_JWT_URL')
+        if jupyterhub_api_token is None or jupyterhub_jwt_url is None:
+            raise RuntimeError('Authentication failed.')
+        try:
+            headers = {
+                **self.__headers,
+                'Authorization': 'Bearer ' + jupyterhub_api_token,
+            }
+            r = requests.get(
+                jupyterhub_jwt_url,
+                headers=headers,
+            )
+            r.raise_for_status()
+            json_web_token = r.text.strip()
+        except requests.exceptions.RequestException as e:
+            raise RuntimeError(
+                'Error while obtaining authentication token: ' + str(e) + '.',
+            )
+        return json_web_token
