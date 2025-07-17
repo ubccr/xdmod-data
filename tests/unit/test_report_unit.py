@@ -20,8 +20,8 @@ def test_set_styles():
                     + ' ACCESS-allocated compute resources.'
                 ),
                 'history': [
-                    [ '1', '2024-10-23', 'Initial Version.'],
-                    [ '2', '2025-01-15', 'Updated time range for plots.'],
+                    ['1', '2024-10-23', 'Initial Version.'],
+                    ['2', '2025-01-15', 'Updated time range for plots.'],
                     [
                         '3',
                         '2025-04-03',
