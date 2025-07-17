@@ -143,7 +143,7 @@ class _HttpRequester:
                     + ' is not running a version of XDMoD that supports the'
                     ' `get_resources` method.',
                 ) from None
-            raise
+            raise  # pragma: no cover
         return result['results']
 
     def _request_json(self, path, post_fields=None):
