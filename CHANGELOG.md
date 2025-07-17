@@ -41,6 +41,7 @@ It is compatible with Open XDMoD version 11.0.x.
   ([\#83](https://github.com/ubccr/xdmod-data/pull/83)).
 - Add support for running in an XDMoD-hosted JupyterHub
   ([\#84](https://github.com/ubccr/xdmod-data/pull/84)).
+- Add report module ([\#86](https://github.com/ubccr/xdmod-data/pull/86)).
 
 ## v1.0.3 (2025-01-30)
 
