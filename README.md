@@ -4,11 +4,6 @@ As part of the Data Analytics Framework for [XDMoD](https://open.xdmod.org),
 this Python package provides API access to the data warehouse of instances of
 Open XDMoD.
 
-This documentation is for **v2.x.y (main development branch)**. For
-documentation of other versions:
-
-- [v1.x.y](https://github.com/ubccr/xdmod-data/tree/v1.x.y?tab=readme-ov-file#xdmod-data)
-
 The package can be installed from PyPI via `pip install xdmod-data`.
 
 Existing installations can be upgraded via `pip install --upgrade xdmod-data`.
@@ -26,10 +21,11 @@ Example usage is documented through Jupyter notebooks in the
 Specific versions of this package are compatible with specific versions of Open
 XDMoD as indicated in the table below.
 
-| `xdmod-data` version | Open XDMoD versions |
-| -------------------- | ------------------- |
-| 1.0.3, 1.0.2, 1.0.1  | 11.0.x, 10.5.x      |
-| 1.0.0                | 10.5.x              |
+| `xdmod-data` versions | Open XDMoD versions    |
+| --------------------- | ---------------------- |
+| 1.1.0                 | 11.0.x                 |
+| 1.0.3, 1.0.2, 1.0.1   | 11.0.1, 11.0.0, 10.5.x |
+| 1.0.0                 | 10.5.x                 |
 
 ## API Token Access
 
