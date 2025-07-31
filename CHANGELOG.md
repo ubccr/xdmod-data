@@ -21,27 +21,6 @@ It is compatible with Open XDMoD version 11.0.x.
   ([\#84](https://github.com/ubccr/xdmod-data/pull/84)).
 - Add report module ([\#86](https://github.com/ubccr/xdmod-data/pull/86)).
 
-## v1.1.0 (2025-07-17)
-
-This release adds support for running the package in an XDMoD-hosted
-JupyterHub, adds a method for retrieving data about resources (from XDMoD
-portals running version 11.0.2 or greater), adds a module with helper functions
-for making Jupyter reports, and fixes a bug in retrieving raw data.
-
-It is compatible with Open XDMoD version 11.0.x.
-
-- Remove unnecessary request made when runtime context is entered
-  ([\#74](https://github.com/ubccr/xdmod-data/pull/74)).
-- Remove Open XDMoD 10.5 support
-  ([\#75](https://github.com/ubccr/xdmod-data/pull/75)).
-- Raise runtime error if raw data stream is closed unexpectedly.
-  ([\#80](https://github.com/ubccr/xdmod-data/pull/80)).
-- Add `get_resources` method to the API
-  ([\#83](https://github.com/ubccr/xdmod-data/pull/83)).
-- Add support for running in an XDMoD-hosted JupyterHub
-  ([\#84](https://github.com/ubccr/xdmod-data/pull/84)).
-- Add report module ([\#86](https://github.com/ubccr/xdmod-data/pull/86)).
-
 ## v1.0.3 (2025-01-30)
 
 This release fixes a `ValueError` that occurs with the Plotly `timeseries`
