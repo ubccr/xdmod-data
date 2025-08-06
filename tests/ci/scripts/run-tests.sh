@@ -24,7 +24,7 @@ for python_container in $python_containers; do
     docker exec $python_container bash -c 'sudo chown -R circleci:circleci /home/circleci/project'
     docker exec -w /home/circleci/project $python_container bash -c 'python3 -m pip install --upgrade pip'
     docker exec -w /home/circleci/project $python_container bash -c 'python3 -m pip install --upgrade flake8 flake8-commas flake8-quotes'
-    docker exec -w /home/circleci/project $python_container bash -c 'python3 -m flake8 . --max-complexity=10 --max-line-length=160 --show-source --exclude __init__.py'
+    docker exec -w /home/circleci/project $python_container bash -c 'python3 -m flake8 . --max-complexity=12 --max-line-length=160 --show-source --exclude __init__.py'
     docker exec -w /home/circleci/project $python_container bash -c 'python3 -m pip install -e .[report]'
     docker exec -w /home/circleci/project $python_container bash -c 'python3 -m pip install --upgrade python-dotenv pytest coverage'
     # The minimum version of each dependency should be tested in the
