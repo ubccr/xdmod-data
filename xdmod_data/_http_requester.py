@@ -8,7 +8,8 @@ from xdmod_data.__version__ import __title__, __version__
 
 
 class _HttpRequester:
-    def __init__(self, xdmod_host):
+    def __init__(self, xdmod_host, logger):
+        self.__logger = logger
         self.__in_runtime_context = False
         _validator._assert_str('xdmod_host', xdmod_host)
         xdmod_host = re.sub('/+$', '', xdmod_host)
@@ -89,7 +90,7 @@ class _HttpRequester:
             if params['show_progress']:
                 self.__print_progress_msg(num_rows_read, 'DONE\n')
             if last_line_size != '0':  # pragma: no cover
-                raise RuntimeError(
+                self.__logger.warning(
                     'Connection closed before all data were received!'
                     + ' You may need to break your request into smaller'
                     + ' chunks by running `get_raw_data()` multiple times with'
