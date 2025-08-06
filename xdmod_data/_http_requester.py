@@ -8,7 +8,8 @@ from xdmod_data.__version__ import __title__, __version__
 
 
 class _HttpRequester:
-    def __init__(self, xdmod_host):
+    def __init__(self, xdmod_host, logger):
+        self.__logger = logger
         self.__in_runtime_context = False
         _validator._assert_str('xdmod_host', xdmod_host)
         xdmod_host = re.sub('/+$', '', xdmod_host)
@@ -65,37 +66,41 @@ class _HttpRequester:
             # line contains the row we care about and the first line
             # contains the hex size of the second line.
             is_first_line_in_pair = True
-            for line in response.iter_lines():
-                # There is a bug in Requests (see
-                # https://github.com/psf/requests/issues/5540) such that empty
-                # lines are occasionally sent via iter_lines(); ignore these.
-                if line == b'':
-                    continue
-                line_text = line.decode('utf-8')
-                if is_first_line_in_pair:
-                    last_line_size = line_text
-                # The last line will be of size 0 and should not be
-                # processed.
-                elif last_line_size != '0':  # pragma: no branch
-                    (data, fields) = self.__process_raw_data_response_row(
-                        line_text,
-                        num_rows_read,
-                        params['show_progress'],
-                        data,
-                        fields,
-                    )
-                    num_rows_read += 1
-                is_first_line_in_pair = not is_first_line_in_pair
-            if params['show_progress']:
-                self.__print_progress_msg(num_rows_read, 'DONE\n')
-            if last_line_size != '0':  # pragma: no cover
-                raise RuntimeError(
-                    'Connection closed before all data were received!'
-                    + ' You may need to break your request into smaller'
-                    + ' chunks by running `get_raw_data()` multiple times with'
-                    + ' fewer days specified for `duration` and then piecing'
-                    + ' the resulting data frames back together.',
-                )
+            connection_closed_warning_msg = (
+                'Connection closed before all data were received!'
+                + ' You may need to break your request into smaller'
+                + ' chunks by running `get_raw_data()` multiple times with'
+                + ' fewer days specified for `duration` and then piecing'
+                + ' the resulting data frames back together.'
+            )
+            try:
+                for line in response.iter_lines():
+                    # There is a bug in Requests (see
+                    # https://github.com/psf/requests/issues/5540) such that empty
+                    # lines are occasionally sent via iter_lines(); ignore these.
+                    if line == b'':
+                        continue
+                    line_text = line.decode('utf-8')
+                    if is_first_line_in_pair:
+                        last_line_size = line_text
+                    # The last line will be of size 0 and should not be
+                    # processed.
+                    elif last_line_size != '0':  # pragma: no branch
+                        (data, fields) = self.__process_raw_data_response_row(
+                            line_text,
+                            num_rows_read,
+                            params['show_progress'],
+                            data,
+                            fields,
+                        )
+                        num_rows_read += 1
+                    is_first_line_in_pair = not is_first_line_in_pair
+                if params['show_progress']:
+                    self.__print_progress_msg(num_rows_read, 'DONE\n')
+                if last_line_size != '0':  # pragma: no cover
+                    self.__logger.warning(connection_closed_warning_msg)
+            except requests.exceptions.ChunkedEncodingError:  # pragma: no cover
+                self.__logger.warning(connection_closed_warning_msg)
         return (data, fields)
 
     def _request_filter_values(self, realm_id, dimension_id):
