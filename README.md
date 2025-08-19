@@ -33,7 +33,7 @@ The Data Analytics Framework can be used within an XDMoD-hosted JupyterHub
 (such as is available for [ACCESS XDMoD](https://xdmod.access-ci.org)), in
 which case authentication happens automatically through XDMoD. Otherwise,
 authentication occurs via API tokens. To obtain an API token from the XDMoD
-portal, follow the steps
+portal, follow the instructions
 [here](https://open.xdmod.org/data-analytics-framework.html).
 
 ## Feedback / Feature Requests
