@@ -29,39 +29,12 @@ XDMoD as indicated in the table below.
 
 ## API Token Access
 
-Use of the Data Analytics Framework requires an API token. To obtain an API
-token, follow the steps below to obtain an API token from the XDMoD portal.
-
-1. First, if you are not already signed in to the portal, sign in in the
-   top-left corner:
-
-    ![Screenshot of "Sign In" button](https://raw.githubusercontent.com/ubccr/xdmod-data/main/docs/images/api-token/sign-in.jpg)
-
-1. Next, click the "My Profile" button in the top-right corner:
-
-    ![Screenshot of "My Profile" button](https://raw.githubusercontent.com/ubccr/xdmod-data/main/docs/images/api-token/my-profile.jpg)
-
-1. The "My Profile" window will appear. Click the "API Token" tab:
-
-    ![Screenshot of "API Token" tab](https://raw.githubusercontent.com/ubccr/xdmod-data/main/docs/images/api-token/api-token-tab.jpg)
-
-    **Note:** If the "API Token" tab does not appear, it means this instance of XDMoD is not configured for the Data Analytics Framework.
-
-1. If you already have an existing token, delete it:
-
-    ![Screenshot of "Delete API Token" button](https://raw.githubusercontent.com/ubccr/xdmod-data/main/docs/images/api-token/delete.jpg)
-
-1. Click the "Generate API Token" button:
-
-    ![Screenshot of "Generate API Token" button](https://raw.githubusercontent.com/ubccr/xdmod-data/main/docs/images/api-token/generate.jpg)
-
-1. Copy the token to your clipboard. Make sure to paste it somewhere secure for
-   saving, as you will not be able to see the token again once you close the
-   window:
-
-    ![Screenshot of "Copy API Token to Clipboard" button](https://raw.githubusercontent.com/ubccr/xdmod-data/main/docs/images/api-token/copy.jpg)
-
-    **Note:** If you lose your token, simply delete it and generate a new one.
+The Data Analytics Framework can be used within an XDMoD-hosted JupyterHub
+(such as is available for [ACCESS XDMoD](https://xdmod.access-ci.org)), in
+which case authentication happens automatically through XDMoD. Otherwise,
+authentication occurs via API tokens. To obtain an API token from the XDMoD
+portal, follow the steps
+[here](https://open.xdmod.org/data-analytics-framework.html).
 
 ## Feedback / Feature Requests
 
