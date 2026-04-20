@@ -240,7 +240,7 @@ def test_get_durations(valid_dw):
 
 
 @pytest.mark.parametrize(
-    'service_provider', [[None], ['screw']],
+    'service_provider', [[None], ['screw']], ids=['none', 'not-none'],
 )
 def test_get_resources(valid_dw, service_provider):
     # get_resources is not supported in XDMoD < 11.0.2.

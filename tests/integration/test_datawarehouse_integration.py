@@ -50,24 +50,38 @@ VALID_VALUES = {
   'show_progress': False,
   'service_provider': 'screw',
 }
+
+
+def __get_key_error_test_match(param):
+    realm_text = ''
+    if param in ['metric', 'dimension']:
+        realm_text = f' in the \'{VALID_VALUES["realm"]}\' realm'
+    return f"Value for `{param}` not found{realm_text}: '{INVALID_STR}'"
+
+
 KEY_ERROR_TEST_VALUES_AND_MATCHES = {
-    'duration': (INVALID_STR, 'Invalid value for `duration`'),
-    'realm': (INVALID_STR, r'Realm .* not found'),
-    'metric': (INVALID_STR, r'Metric .* not found'),
-    'dimension': (INVALID_STR, r'Dimension .* not found'),
-    'filter_key': ({INVALID_STR: INVALID_STR}, r'Dimension .* not found'),
-    'filter_value': (
-        {VALID_DIMENSION: INVALID_STR},
-        r'Filter value .* not found',
-    ),
-    'dataset_type': (INVALID_STR, 'Invalid value for `dataset_type`'),
-    'aggregation_unit': (INVALID_STR, 'Invalid value for `aggregation_unit`'),
-    'parameter': (
+    'filters:key': [
+        {INVALID_STR: INVALID_STR},
+        __get_key_error_test_match('dimension'),
+    ],
+    'parameter': [
         INVALID_STR,
         'Parameter .* does not have a list of valid values',
-    ),
-    'field': (INVALID_STR, r'Field .* not found'),
+    ],
 }
+for param in [
+    'duration',
+    'realm',
+    'metric',
+    'dimension',
+    'dataset_type',
+    'aggregation_unit',
+    'field',
+]:
+    KEY_ERROR_TEST_VALUES_AND_MATCHES[param] = [
+        INVALID_STR,
+        __get_key_error_test_match(param),
+    ]
 
 key_error_test_ids = []
 duration_test_ids = []
@@ -110,10 +124,9 @@ for method in METHOD_PARAMS:
             ]
             value_error_test_methods += [method]
     if 'filters' in METHOD_PARAMS[method]:
-        for param in ('filter_key', 'filter_value'):
-            key_error_test_ids += [method + ':' + param]
-            (value, match) = KEY_ERROR_TEST_VALUES_AND_MATCHES[param]
-            key_error_test_params += [(method, {'filters': value}, match)]
+        key_error_test_ids += [method + ':filters:key']
+        (value, match) = KEY_ERROR_TEST_VALUES_AND_MATCHES['filters:key']
+        key_error_test_params += [(method, {'filters': value}, match)]
 
 
 load_dotenv(Path(os.path.expanduser(TOKEN_PATH)), override=True)
@@ -489,3 +502,44 @@ def test_get_resources_invalid_service_provider(dw_methods):
     # get_resources is not supported in XDMoD < 11.0.2.
     if XDMOD_VERSION != 'xdmod-11-0':
         assert result == []
+
+
+def test_deprecated_raw_field(dw_methods):
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            "The field name 'Organization' in the 'Jobs' realm is deprecated"
+            ' and will be removed in a future version of XDMoD. Use'
+            " 'User Institution' instead."
+        ),
+    ):
+        __run_method(
+            dw_methods,
+            'get_raw_data',
+            {
+                'duration': ['0000-01-01', '0000-01-01'],
+                'realm': 'Jobs',
+                'fields': ['Organization'],
+            },
+        )
+
+
+filters_methods = [
+    method for method, params in METHOD_PARAMS.items() if 'filters' in params
+]
+
+
+@pytest.mark.parametrize('method', filters_methods)
+def test_invalid_filter_value(dw_methods, method):
+    with pytest.warns(
+        UserWarning,
+        match=(
+            f"Filter value not found for the '{VALID_DIMENSION}' dimension in"
+            f" the '{VALID_VALUES['realm']}' realm: '{INVALID_STR}'"
+        ),
+    ):
+        __run_method(
+            dw_methods,
+            method,
+            {'filters': {VALID_DIMENSION: INVALID_STR}},
+        )
