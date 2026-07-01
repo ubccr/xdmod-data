@@ -1,11 +1,100 @@
 version: 2.1
+
+executors:
+  min-python:
+    machine:
+      image: ubuntu-2004:2024.11.1
+    environment:
+      PYTHON_VERSION: "3.8"
+  max-python:
+    machine:
+      image: ubuntu-2604:2026.05.1
+    environment:
+      PYTHON_VERSION: "3.14"
+
 jobs:
-  build:
-    docker:
-      - image: cimg/base:current
+  build_xdmod_images:
+    parameters:
+      xdmod_version:
+        type: string
+    environment:
+      XDMOD_VERSION: << parameters.xdmod_version >>
+      BASE_IMAGE: "tools-ext-01.ccr.xdmod.org/xdmod:x86_64-rockylinux8.9.20231119-v11.0.0-1.0-03"
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large
     steps:
       - checkout
-      - setup_remote_docker
       - run:
-          name: Spin up containers and test different Python versions against different XDMoD web server versions
-          command: ./tests/ci/scripts/run-tests.sh
+          name: Build XDMoD web server images
+          command: ./tests/ci/scripts/build_xdmod_img.sh
+      - persist_to_workspace:
+          root: .
+          paths:
+            - << parameters.xdmod_version >>.tar
+  run_tests:
+    parameters:
+      xdmod_version:
+        type: string
+      python_version:
+        type: string
+    environment:
+      XDMOD_VERSION: << parameters.xdmod_version >>
+    executor: << parameters.python_version >>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run tests against XDMoD web server image
+          command: ./tests/ci/scripts/run_tests.sh
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .coverage.*
+  coverage_report:
+    parameters:
+      python_version:
+        type: string
+    executor: << parameters.python_version >>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Generate coverage report
+          command: ./tests/ci/scripts/generate_coverage_report.sh
+  lint:
+    docker:
+      - image: cimg/python:3.14
+    steps:
+      - checkout 
+      - run:
+          name: Lint
+          command: |
+            python3 -m pip install --upgrade flake8 flake8-commas flake8-quotes
+            python3 -m flake8 . --max-complexity=10 --max-line-length=160 --show-source --exclude __init__.py
+
+workflows:
+  build_and_test:
+    jobs:
+      - build_xdmod_images:
+          matrix:
+            parameters:
+              xdmod_version: ["xdmod-main-dev", "xdmod-11-0-dev", "xdmod-11-0"]
+      - run_tests:
+          requires:
+            - build_xdmod_images
+          matrix:
+            parameters:
+              xdmod_version: ["xdmod-main-dev", "xdmod-11-0-dev", "xdmod-11-0"]
+              python_version: ["min-python", "max-python"]
+      - coverage_report:
+          requires:
+            - run_tests
+          matrix:
+            parameters:
+              python_version: ["min-python", "max-python"]
+  lint:
+    jobs: 
+      - lint

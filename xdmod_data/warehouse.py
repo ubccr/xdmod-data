@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import warnings
 import pandas as pd
 from xdmod_data._descriptors import _Descriptors
 from xdmod_data._http_requester import _HttpRequester
@@ -299,6 +300,14 @@ class DataWarehouse:
         return self.__describe_metrics_or_dimensions(realm, 'dimensions')
 
     def get_filter_values(self, realm, dimension):
+        warnings.warn(
+            "get_filter_values() is deprecated and will be removed in a future version. Use get_dimension_data() instead.",
+            FutureWarning,
+            stacklevel=2,
+            )
+        return self.get_dimension_data(realm, dimension)
+
+    def get_dimension_data(self, realm, dimension):
         """Get a data frame containing the valid filter values for the given
            dimension of the given realm.
 
