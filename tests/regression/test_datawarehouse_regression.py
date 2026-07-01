@@ -72,7 +72,7 @@ def __get_data_dir(override_default_data=False):
     [
         (
             {},
-            '54748',
+            '54749',
             'raw-data-every-1000-no-fields-no-filters.csv',
         ),
         (
@@ -118,6 +118,9 @@ def test_get_raw_data(valid_dw, capsys, additional_params, number, csv_title):
             XDMOD_VERSION in ['xdmod-11-0', 'xdmod-11-0-dev']
         ),
     )
+     # This PR added an extra job: https://github.com/ubccr/xdmod/pull/2176
+    if XDMOD_VERSION in ['xdmod-11-0', 'xdmod-11-0-dev']:
+        number = str(int(number) - 1)
     assert 'Got ' + number + ' rows...DONE' in capsys.readouterr().out
 
 
@@ -202,6 +205,9 @@ def test_get_data(valid_dw, aggregation_unit, data_file):
         index_col='Time',
         columns_name='Metric',
         dtype={'CPU Hours: Total': 'Float64'},
+        override_default_data=(
+            XDMOD_VERSION in ['xdmod-11-0', 'xdmod-11-0-dev']
+        ),
     )
 
 

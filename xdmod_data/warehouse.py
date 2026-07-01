@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import warnings
 import pandas as pd
 from xdmod_data._descriptors import _Descriptors
 from xdmod_data._http_requester import _HttpRequester
@@ -144,14 +145,56 @@ class DataWarehouse:
            ValueError
                If `duration` is an object but not of length 2.
         """
-        _validator._assert_runtime_context(self.__in_runtime_context)
-        params = _validator._validate_get_data_params(
-            self,
-            self.__descriptors,
-            locals(),
+        warnings.warn(
+            "get_data() is deprecated and will be removed in xdmod-data 2.0.0. use get_metrics_data() instead.",
+            FutureWarning,
         )
-        response = self.__http_requester._request_data(params)
-        return _response_processor._process_get_data_response(
+        return self.get_metrics_data(
+            #.....
+        )
+
+    def get_metrics_data(
+        self,
+        date_range,
+        realm,
+        metric,
+        group_by,
+        dataset_type,
+        aggregation_unit,
+        include_only,
+        exclude
+    ):
+
+    _validator._assert_runtime_context(self.__in_runtime_context)
+
+    if isinstance(metric, list):
+        raise NotImplementedError("metric as a list is not yet implemented")
+
+    if isinstance(group_by, (list, dict)):
+        raise NotImplementedError("group_by as a list or dict is not yet implemented")
+
+    if exclude:
+        raise NotImplementedError("exclude is not yet implemented")
+
+    translated_params = {
+        'duration': date_range,
+        'realm': realm,
+        'metric': metric,
+        'dimension': group_by,
+        'filters': include_only,
+        'dataset_type': dataset_type,
+        'aggregation_unit': aggregation_unit,
+    }
+
+    params = _validator._validate_get_data_params(
+        self,
+        self.__descriptors,
+        translated_params,
+    )
+
+    response = self.__http_requester._request_data(params)
+
+    return _response_processor._process_get_data_response(
             self,
             params,
             response.text,
