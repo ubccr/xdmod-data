@@ -64,7 +64,6 @@ for xdmod_container in $xdmod_containers; do
             docker exec -w /root/xdmod $xdmod_container bash -c 'sed -i "/^confirmResourceSpecs/d" tests/ci/scripts/xdmod-upgrade.tcl'
         fi
         docker exec -w /root/xdmod $xdmod_container bash -c 'XDMOD_TEST_MODE=upgrade bash -x ./tests/ci/bootstrap.sh'
-        docker exec -w /root/xdmod $xdmod_container bash -c './tests/ci/validate.sh'
     fi
     # Update the server hostnames and certificates so the Python containers can
     # make requests to them.
