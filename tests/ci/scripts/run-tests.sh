@@ -2,6 +2,7 @@
 # Use Docker Compose to spin up containers and test different Python versions
 # against different XDMoD web server versions.
 
+export PS4='+ $(date "+%Y-%m-%d %H:%M:%S") '
 set -exo pipefail
 
 export MIN_PYTHON_VERSION=3.8
