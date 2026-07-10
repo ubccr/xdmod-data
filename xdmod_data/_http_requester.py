@@ -126,19 +126,16 @@ class _HttpRequester:
             url_params = '?' + urlencode({
                 'service_provider': service_provider,
             })
-        try:
-            result = self._request_json(
-                path='/rest/v1/warehouse/resources' + url_params,
-            )
-        except RuntimeError as e:
-            if 'Error 404' in str(e):
-                raise RuntimeError(
-                    f'The requested XDMoD portal ({self.__xdmod_host})'
-                    + ' is not running a version of XDMoD that supports the'
-                    ' `get_resources` method.',
-                ) from None
-            raise  # pragma: no cover
-        return result['results']
+        return self.__try_possibly_unsupported_method(
+            path='/rest/v1/warehouse/resources' + url_params,
+            method_name='get_resources',
+        )
+
+    def _request_user_data(self):
+        return self.__try_possibly_unsupported_method(
+            path='/rest/v1/users/current',
+            method_name='whoami',
+        )
 
     def _request_json(self, path, post_fields=None):
         response = self.__request(path, post_fields)
@@ -285,3 +282,16 @@ class _HttpRequester:
                 'Error while obtaining authentication token: ' + str(e) + '.',
             )
         return json_web_token
+
+    def __try_possibly_unsupported_method(self, path, method_name):
+        try:
+            result = self._request_json(path=path)
+        except RuntimeError as e:
+            if 'Error 404' in str(e):
+                raise RuntimeError(
+                    f'The requested XDMoD portal ({self.__xdmod_host})'
+                    ' is not running a version of XDMoD that supports the'
+                    f' `{method_name}` method.',
+                ) from None
+            raise  # pragma: no cover
+        return result['results']
