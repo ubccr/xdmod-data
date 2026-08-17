@@ -2,8 +2,27 @@
 
 ## Testing the code
 
-A testing script is available in `tests/ci/bootstrap.sh`. It requires Docker
-Compose and `yq`.
+CircleCI will automatically run tests on Pull Requests to the `xdmod-data`
+GitHub repository. To test the code manually/locally, you will need to have
+Docker running and to follow these steps:
+
+1. Edit `tests/ci/artifacts/manual.env` to set the desired values.
+1. Run the following command to read those values into the environment:
+    ```
+    set -a && source tests/ci/artifacts/manual.env && set +a
+    ```
+1. Execute `tests/ci/scripts/build_xdmod_img.sh` to run an XDMoD container
+   using the values you set in the previous step.
+1. Execute `tests/ci/scripts/run_tests.sh` to run the tests against the XDMoD
+   container and the current directory's version of `xdmod-data` and generate
+   a coverage file in `.coverage.${PYTHON_VERSION}.${XDMOD_VERSION}` (note that
+   `PYTHON_VERSION` does not need to be defined).
+1. If you wish to manually test code coverage, you can run these steps again
+   for the other versions of XDMoD, then run
+   `tests/ci/scripts/generate_coverage_report.sh`.
+
+Linting can be done manually by running the commands in the `lint` job in
+`.circleci/config.yml`.
 
 To test with the notebooks in `xdmod-notebooks`, you can edit their first code
 cell to replace `xdmod-data` and its version constraints with the following,

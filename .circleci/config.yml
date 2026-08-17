@@ -1,11 +1,49 @@
 version: 2.1
+
+parameters:
+  max_python_version:
+    type: string
+    default: "3.14"
+
 jobs:
-  build:
+  lint:
     docker:
-      - image: cimg/base:current
+      - image: cimg/python:<< pipeline.parameters.max_python_version >>
+    resource_class: small
     steps:
       - checkout
-      - setup_remote_docker
       - run:
-          name: Spin up containers and test different Python versions against different XDMoD web server versions
-          command: ./tests/ci/scripts/run-tests.sh
+          name: Lint
+          command: |
+            python3 -m pip install --upgrade flake8 flake8-commas flake8-quotes
+            python3 -m flake8 . --max-complexity=10 --max-line-length=160 --show-source --exclude __init__.py
+  tests:
+    docker:
+      - image: cimg/python:<< pipeline.parameters.max_python_version >>
+
+      - image: tools-ext-01.ccr.xdmod.org/xdmod:xdmod-data-main-dev
+        name: xdmod-main-dev
+        environment:
+          CONTAINER_NAME: xdmod-main-dev
+      - image: tools-ext-01.ccr.xdmod.org/xdmod:xdmod-data-11-0-dev
+        name: xdmod-11-0-dev
+        environment:
+          CONTAINER_NAME: xdmod-11-0-dev
+      - image: tools-ext-01.ccr.xdmod.org/xdmod:xdmod-data-11-0
+        name: xdmod-11-0
+        environment:
+          CONTAINER_NAME: xdmod-11-0
+    steps:
+      - checkout
+      - run:
+          name: Run Tests
+          command: ./tests/ci/scripts/run_tests.sh
+
+
+workflows:
+  lint:
+    jobs:
+      - lint
+  tests:
+    jobs:
+      - tests

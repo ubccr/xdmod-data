@@ -1,23 +1,24 @@
 services:
-  # Test the minimum and maximum supported Python versions:
-  python-min:
-    container_name: python-min
-    image: cimg/python:${MIN_PYTHON_VERSION}
-    tty: true
-  python-max:
-    container_name: python-max
-    image: cimg/python:${MAX_PYTHON_VERSION}
-    tty: true
-  # Test the supported and development versions of the XDMoD web server:
   xdmod-main-dev:
+    image: tools-ext-01.ccr.xdmod.org/xdmod:xdmod-data-main-dev
     container_name: xdmod-main-dev
-    image: ${XDMOD_11_0_IMAGE}
-    tty: true
+    environment:
+      CONTAINER_NAME: xdmod-main-dev
   xdmod-11-0-dev:
+    image: tools-ext-01.ccr.xdmod.org/xdmod:xdmod-data-11-0-dev
     container_name: xdmod-11-0-dev
-    image: ${XDMOD_11_0_IMAGE}
-    tty: true
+    environment:
+      CONTAINER_NAME: xdmod-11-0-dev
   xdmod-11-0:
+    image: tools-ext-01.ccr.xdmod.org/xdmod:xdmod-data-11-0
     container_name: xdmod-11-0
-    image: ${XDMOD_11_0_IMAGE}
-    tty: true
+    environment:
+      CONTAINER_NAME: xdmod-11-0
+  xdmod-data:
+    image: python:3.14
+    container_name: xdmod-data
+    user: root
+    working_dir: /project
+    volumes:
+      - ../../..:/project
+    command: bash -c "apt-get update && apt-get install -y jq && sleep infinity"
