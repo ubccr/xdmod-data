@@ -9,7 +9,8 @@ from xdmod_data.__version__ import __title__, __version__
 
 
 class _HttpRequester:
-    def __init__(self, xdmod_host):
+    def __init__(self, xdmod_host, logger):
+        self.__logger = logger
         self.__in_runtime_context = False
         _validator._assert_type("xdmod_host", xdmod_host)
         xdmod_host = re.sub("/+$", "", xdmod_host)
@@ -38,17 +39,17 @@ class _HttpRequester:
 
     def _request_raw_data(self, params):
         url_params = self.__get_raw_data_url_params(params)
-        data = []
-        fields = None
         response = self.__request(
             path="/rest/v1/warehouse/raw-data?" + url_params,
             post_fields=None,
             stream=True,
         )
-        num_rows_read = 0
         # Once XDMoD 11.0 is no longer supported, only the else branch will
         # be needed:
         if response.headers["Content-Type"] == "application/json-seq":
+            data = []
+            fields = None
+            num_rows_read = 0
             for line in response.iter_lines():
                 line_text = line.decode("utf-8").replace("\x1e", "")
                 data, fields = self.__process_raw_data_response_row(
@@ -62,42 +63,13 @@ class _HttpRequester:
             if params["show_progress"]:
                 self.__print_progress_msg(num_rows_read, "DONE\n")
         else:
-            # The data stream consists of pairs of lines where the second
-            # line contains the row we care about and the first line
-            # contains the hex size of the second line.
-            is_first_line_in_pair = True
-            for line in response.iter_lines():
-                # There is a bug in Requests (see
-                # https://github.com/psf/requests/issues/5540) such that empty
-                # lines are occasionally sent via iter_lines(); ignore these.
-                if line == b"":
-                    continue
-                line_text = line.decode("utf-8")
-                if is_first_line_in_pair:
-                    last_line_size = line_text
-                # The last line will be of size 0 and should not be
-                # processed.
-                elif last_line_size != "0":  # pragma: no branch
-                    data, fields = self.__process_raw_data_response_row(
-                        line_text,
-                        num_rows_read,
-                        params["show_progress"],
-                        data,
-                        fields,
-                    )
-                    num_rows_read += 1
-                is_first_line_in_pair = not is_first_line_in_pair
-            if params["show_progress"]:
-                self.__print_progress_msg(num_rows_read, "DONE\n")
-            if last_line_size != "0":  # pragma: no cover
-                raise RuntimeError(
-                    "Connection closed before all data were received!"
-                    + " You may need to break your request into smaller"
-                    + " chunks by running `get_raw_data()` multiple times with"
-                    + " fewer days specified for `duration` and then piecing"
-                    + " the resulting data frames back together.",
+            try:
+                data, fields = self.__process_raw_data_response(
+                    response, params["show_progress"]
                 )
-        return (data, fields)
+            except requests.exceptions.ChunkedEncodingError:  # pragma: no cover
+                self.__logger.warning(_error_messages.RAW_DATA_COLLECTION_CLOSED)
+        return data, fields
 
     def _request_filter_values(self, realm_id, dimension_id):
         limit = 10000
@@ -144,6 +116,41 @@ class _HttpRequester:
     def _request_json(self, path, post_fields=None):
         response = self.__request(path, post_fields)
         return json.loads(response.text)
+
+    def __process_raw_data_response(self, response, show_progress):
+        # The data stream consists of pairs of lines where the second
+        # line contains the row we care about and the first line
+        # contains the hex size of the second line.
+        data = []
+        fields = None
+        num_rows_read = 0
+        is_first_line_in_pair = True
+        for line in response.iter_lines():
+            # There is a bug in Requests (see
+            # https://github.com/psf/requests/issues/5540) such that empty
+            # lines are occasionally sent via iter_lines(); ignore these.
+            if line == b"":
+                continue
+            line_text = line.decode("utf-8")
+            if is_first_line_in_pair:
+                last_line_size = line_text
+            # The last line will be of size 0 and should not be
+            # processed.
+            elif last_line_size != "0":  # pragma: no branch
+                data, fields = self.__process_raw_data_response_row(
+                    line_text,
+                    num_rows_read,
+                    show_progress,
+                    data,
+                    fields,
+                )
+                num_rows_read += 1
+            is_first_line_in_pair = not is_first_line_in_pair
+        if show_progress:
+            self.__print_progress_msg(num_rows_read, "DONE\n")
+        if last_line_size != "0":  # pragma: no cover
+            self.__logger.warning(_error_messages.RAW_DATA_COLLECTION_CLOSED)
+        return data, fields
 
     def __request(self, path="", post_fields=None, stream=False):
         _validator._assert_runtime_context(self.__in_runtime_context)
