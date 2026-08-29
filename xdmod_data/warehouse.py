@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import pandas as pd
+import xdmod_data._error_messages as _error_messages
 from xdmod_data._descriptors import _Descriptors
 from xdmod_data._http_requester import _HttpRequester
 import xdmod_data._response_processor as _response_processor
@@ -46,10 +47,7 @@ class DataWarehouse:
         if xdmod_host is None:
             xdmod_host = os.getenv("XDMOD_HOST")
             if xdmod_host is None:
-                raise TypeError(
-                    "`xdmod_host` parameter or `XDMOD_HOST` environment"
-                    + " variable must be set.",
-                ) from None
+                raise TypeError(_error_messages.MISSING_XDMOD_HOST) from None
         self.__http_requester = _HttpRequester(xdmod_host)
         self.__descriptors = _Descriptors(self.__http_requester)
 

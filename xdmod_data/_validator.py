@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+import xdmod_data._error_messages as _error_messages
 
 
 def _assert_str(name, value):
@@ -7,11 +8,7 @@ def _assert_str(name, value):
 
 def _assert_runtime_context(in_runtime_context):
     if not in_runtime_context:
-        raise RuntimeError(
-            "Method is being called outside of the runtime context."
-            + " Make sure this method is only called within the body"
-            + " of a `with` statement.",
-        )
+        raise RuntimeError(_error_messages.OUTSIDE_RUNTIME_CONTEXT)
 
 
 def _validate_get_data_params(data_warehouse, descriptors, params):
@@ -147,9 +144,7 @@ def __validate_duration(duration):
         try:
             start_date, end_date = duration
         except (TypeError, ValueError) as error:
-            raise type(error)(
-                "`duration` must be a string or an object with 2 items.",
-            ) from None
+            raise type(error)(_error_messages.INVALID_DURATION) from None
     return (start_date, end_date)
 
 
@@ -184,10 +179,7 @@ def __validate_filters(data_warehouse, descriptors, realm, filters):
                 result[dimension_id].append(new_filter_value)
         return result
     except TypeError:
-        raise TypeError(
-            "`filters` must be a mapping whose keys are strings and whose"
-            + " values are strings or sequences of strings.",
-        ) from None
+        raise TypeError(_error_messages.INVALID_FILTERS) from None
 
 
 def __assert_bool(name, value):
@@ -222,9 +214,7 @@ def __validate_raw_fields(data_warehouse, realm, fields):
             results.append(new_field)
         return results
     except TypeError:
-        raise TypeError(
-            "`fields` must be a sequence of strings.",
-        ) from None
+        raise TypeError(_error_messages.INVALID_RAW_FIELDS) from None
 
 
 def __find_id_in_descriptor(descriptor, name, value):

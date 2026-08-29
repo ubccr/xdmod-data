@@ -3,6 +3,7 @@ import os
 import re
 import requests
 from urllib.parse import urlencode
+import xdmod_data._error_messages as _error_messages
 import xdmod_data._validator as _validator
 from xdmod_data.__version__ import __title__, __version__
 
@@ -135,9 +136,7 @@ class _HttpRequester:
         except RuntimeError as e:
             if "Error 404" in str(e):
                 raise RuntimeError(
-                    f"The requested XDMoD portal ({self.__xdmod_host})"
-                    + " is not running a version of XDMoD that supports the"
-                    " `get_resources` method.",
+                    _error_messages.GET_RESOURCES(self.__xdmod_host)
                 ) from None
             raise  # pragma: no cover
         return result["results"]
@@ -149,14 +148,6 @@ class _HttpRequester:
     def __request(self, path="", post_fields=None, stream=False):
         _validator._assert_runtime_context(self.__in_runtime_context)
         url = self.__xdmod_host + path
-        jupyterhub_error_msg = (
-            "If running in an XDMoD-hosted JupyterHub, this is likely a server"
-            + " error from the JupyterHub. If not running in an XDMoD-hosted"
-            + " JupyterHub, make sure the `XDMOD_API_TOKEN` environment"
-            + " variable is set before the `DataWarehouse` is constructed;"
-            + " it should be set to a valid API token obtained from the XDMoD"
-            + " portal."
-        )
         if self.__api_token is not None:
             token = self.__api_token
         else:  # pragma: no cover
@@ -164,7 +155,7 @@ class _HttpRequester:
                 token = self.__request_json_web_token()
             except RuntimeError as e:
                 raise RuntimeError(
-                    str(e) + " " + jupyterhub_error_msg,
+                    str(e) + " " + _error_messages.JUPYTERHUB,
                 ) from None
         headers = {
             **self.__headers,
@@ -196,9 +187,13 @@ class _HttpRequester:
             except json.JSONDecodeError:  # pragma: no cover
                 pass
             if response.status_code == 401:
-                msg = ": Make sure XDMOD_API_TOKEN is set to a valid API token."
+                msg = ": " + _error_messages.HTTP_401
             raise RuntimeError(
-                "Error " + str(response.status_code) + msg + jupyterhub_error_msg,
+                "Error "
+                + str(response.status_code)
+                + msg
+                + " "
+                + _error_messages.JUPYTERHUB,
             ) from None
         return response
 

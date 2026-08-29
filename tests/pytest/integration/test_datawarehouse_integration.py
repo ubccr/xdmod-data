@@ -4,6 +4,7 @@ import pandas
 from pathlib import Path
 import pytest
 import re
+import xdmod_data._error_messages as _error_messages
 from xdmod_data.warehouse import DataWarehouse
 
 VALID_XDMOD_HOST = os.environ["XDMOD_HOST"]
@@ -148,11 +149,7 @@ def __run_method(
     ):
         with pytest.raises(
             RuntimeError,
-            match=re.escape(
-                f"The requested XDMoD portal ({VALID_XDMOD_HOST})"
-                + " is not running a version of XDMoD that supports the"
-                + " `get_resources` method.",
-            ),
+            match=re.escape(_error_messages.GET_RESOURCES(VALID_XDMOD_HOST)),
         ):
             dw_methods[method](**params)
     else:
@@ -191,7 +188,7 @@ def test_RuntimeError_outside_context(
         method,
         {},
         RuntimeError,
-        "outside of the runtime context",
+        _error_messages.OUTSIDE_RUNTIME_CONTEXT,
     )
 
 
