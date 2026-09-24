@@ -7,6 +7,18 @@ OUTSIDE_RUNTIME_CONTEXT = (
     " method is only called within the body of a `with` statement."
 )
 
+def VALUE_NOT_FOUND(name, value, realm=None, valid_values=None):
+    value_text = "Raw field" if name == "field" else f"Value for `{name}`"
+    realm_text = "" if realm is None else f" in the '{realm}' realm"
+    valid_values_sentence = ""
+    if valid_values is not None:
+        valid_values_str = "', '".join(valid_values)
+        valid_values_sentence = f" Value values are: '{valid_values_str}'"
+    return f"{value_text} not found{realm_text}: '{value}'.{valid_values_sentence}"
+
+
+RAW_FIELDS_TYPE_ERROR = "`fields` must be a sequence of strings."
+
 HTTP_401 = "Make sure XDMOD_API_TOKEN is set to a valid API token."
 
 JUPYTERHUB = (

@@ -2,7 +2,7 @@ import numpy as np
 import os
 import pandas as pd
 import xdmod_data._error_messages as _error_messages
-from xdmod_data._descriptors import _Descriptors
+from xdmod_data._descriptors import _AggregateDescriptor, _RawDescriptor
 from xdmod_data._http_requester import _HttpRequester
 import xdmod_data._response_processor as _response_processor
 import xdmod_data._validator as _validator
@@ -49,7 +49,10 @@ class DataWarehouse:
             if xdmod_host is None:
                 raise TypeError(_error_messages.MISSING_XDMOD_HOST) from None
         self.__http_requester = _HttpRequester(xdmod_host)
-        self.__descriptors = _Descriptors(self.__http_requester)
+        self.__aggregate_descriptor = _AggregateDescriptor(
+            self.__http_requester,
+        )
+        self.__raw_descriptor = _RawDescriptor(self.__http_requester)
 
     def __enter__(self):
         self.__in_runtime_context = True
@@ -145,12 +148,12 @@ class DataWarehouse:
         _validator._assert_runtime_context(self.__in_runtime_context)
         params = _validator._validate_get_data_params(
             self,
-            self.__descriptors,
+            self.__aggregate_descriptor,
             locals(),
         )
         response = self.__http_requester._request_data(params)
         return _response_processor._process_get_data_response(
-            self,
+            self.__aggregate_descriptor,
             params,
             response.text,
         )
@@ -214,11 +217,17 @@ class DataWarehouse:
         _validator._assert_runtime_context(self.__in_runtime_context)
         params = _validator._validate_get_raw_data_params(
             self,
-            self.__descriptors,
+            self.__aggregate_descriptor,
+            self.__raw_descriptor,
             locals(),
         )
         data, column_data = self.__http_requester._request_raw_data(params)
-        return self.__get_data_frame(data, column_data)
+        result = pd.DataFrame(
+            data,
+            columns=pd.Series(column_data, dtype="string"),
+            dtype="string",
+        ).fillna(value=np.nan)
+        return result
 
     def describe_realms(self):
         """Get a data frame describing the valid realms in the data warehouse.
@@ -235,11 +244,7 @@ class DataWarehouse:
             there is an error requesting data from the warehouse.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
-        return self.__get_data_frame_from_descriptor(
-            self.__descriptors._get_aggregate(),
-            ("id", "label"),
-            "id",
-        )
+        return self.__aggregate_descriptor._get_data_frame("realms")
 
     def describe_metrics(self, realm):
         """Get a data frame describing the valid metrics for the given realm.
@@ -266,7 +271,8 @@ class DataWarehouse:
         TypeError
             If `realm` is not a string.
         """
-        return self.__describe_metrics_or_dimensions(realm, "metrics")
+        _validator._assert_runtime_context(self.__in_runtime_context)
+        return self.__aggregate_descriptor._get_data_frame("metrics", realm)
 
     def describe_dimensions(self, realm):
         """Get a data frame describing the valid dimensions for the given
@@ -294,7 +300,8 @@ class DataWarehouse:
         TypeError
             If `realm` is not a string.
         """
-        return self.__describe_metrics_or_dimensions(realm, "dimensions")
+        _validator._assert_runtime_context(self.__in_runtime_context)
+        return self.__aggregate_descriptor._get_data_frame("dimensions", realm)
 
     def get_filter_values(self, realm, dimension):
         """Get a data frame containing the valid filter values for the given
@@ -328,18 +335,21 @@ class DataWarehouse:
             If `realm` or `dimension` are not strings.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
-        realm_id = _validator._find_realm_id(self.__descriptors, realm)
-        dimension_id = _validator._find_dimension_id(
-            self.__descriptors,
-            realm_id,
+        realm_id = self.__aggregate_descriptor._get_data_id("realms", realm)
+        dimension_id = self.__aggregate_descriptor._get_data_id(
+            "dimensions",
             dimension,
+            realm_id,
         )
         response_data = self.__http_requester._request_filter_values(
             realm_id,
             dimension_id,
         )
-        data = [(datum["id"], datum["name"]) for datum in response_data]
-        result = self.__get_data_frame(data, ("id", "label"), "id")
+        result = pd.DataFrame(
+            data=[(datum["id"], datum["name"]) for datum in response_data],
+            columns=pd.Series(["id", "label"], dtype="string"),
+            dtype="string",
+        ).set_index("id")
         return result
 
     def get_durations(self):
@@ -379,11 +389,7 @@ class DataWarehouse:
             there is an error requesting data from the warehouse.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
-        return self.__get_data_frame_from_descriptor(
-            self.__descriptors._get_raw(),
-            ("id", "label"),
-            "id",
-        )
+        return self.__raw_descriptor._get_data_frame("realms")
 
     def describe_raw_fields(self, realm):
         """Get a data frame describing the raw data fields for the given realm.
@@ -412,12 +418,7 @@ class DataWarehouse:
             If `realm` is not a string.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
-        realm_id = _validator._find_raw_realm_id(self.__descriptors, realm)
-        return self.__get_data_frame_from_descriptor(
-            self.__descriptors._get_raw()[realm_id]["fields"],
-            ("id", "label", "description"),
-            "id",
-        )
+        return self.__raw_descriptor._get_data_frame("fields", realm)
 
     def get_resources(self, service_provider=None):
         """Get a dictionary containing information about the configured
@@ -443,47 +444,3 @@ class DataWarehouse:
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
         return self.__http_requester._request_resources(service_provider)
-
-    def _get_metric_label(self, realm, metric_id):
-        d = self.__descriptors._get_aggregate()
-        return d[realm]["metrics"][metric_id]["label"]
-
-    def _get_dimension_label(self, realm, dimension_id):
-        if dimension_id == "none":
-            return None
-        d = self.__descriptors._get_aggregate()
-        return d[realm]["dimensions"][dimension_id]["label"]
-
-    def __get_data_frame(self, data, column_data, index=None):
-        result = pd.DataFrame(
-            data=data,
-            columns=pd.Series(
-                data=column_data,
-                dtype="string",
-            ),
-            dtype="string",
-        ).fillna(value=np.nan)
-        if index:
-            result = result.set_index(index)
-        return result
-
-    def __get_data_frame_from_descriptor(
-        self,
-        descriptor,
-        columns,
-        index=None,
-    ):
-        data = [
-            [id_] + [descriptor[id_][column] for column in columns[1:]]
-            for id_ in descriptor
-        ]
-        return self.__get_data_frame(data, columns, index)
-
-    def __describe_metrics_or_dimensions(self, realm, m_or_d):
-        _validator._assert_runtime_context(self.__in_runtime_context)
-        realm_id = _validator._find_realm_id(self.__descriptors, realm)
-        return self.__get_data_frame_from_descriptor(
-            self.__descriptors._get_aggregate()[realm_id][m_or_d],
-            ("id", "label", "description"),
-            "id",
-        )

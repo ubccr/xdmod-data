@@ -6,23 +6,25 @@ import pandas as pd
 import re
 
 
-def _process_get_data_response(dw, params, response):
-    params["metric"] = dw._get_metric_label(
-        params["realm"],
+def _process_get_data_response(aggregate_descriptor, params, response):
+    params["metric"] = aggregate_descriptor._get_label_from_id(
+        "metrics",
         params["metric"],
-    )
-    params["dimension"] = dw._get_dimension_label(
         params["realm"],
+    )
+    params["dimension"] = aggregate_descriptor._get_label_from_id(
+        "dimensions",
         params["dimension"],
+        params["realm"],
     )
     csv_data = csv.reader(response.splitlines())
     if params["dataset_type"] == "timeseries":
-        return __parse_timeseries_csv_data(dw, params, csv_data)
+        return __parse_timeseries_csv_data(params, csv_data)
     else:
         return __parse_aggregate_csv_data(params, csv_data)
 
 
-def __parse_timeseries_csv_data(dw, params, csv_data):
+def __parse_timeseries_csv_data(params, csv_data):
     time_values = []
     data = []
     for line_num, line in enumerate(csv_data):
@@ -32,7 +34,6 @@ def __parse_timeseries_csv_data(dw, params, csv_data):
             time_values.append(__parse_timeseries_date_string(line[0]))
             data.append(np.asarray(line[1:]))
     return __get_timeseries_data_frame(
-        dw,
         params,
         data,
         time_values,
@@ -80,7 +81,6 @@ def __parse_timeseries_date_string(date_string):
 
 
 def __get_timeseries_data_frame(
-    dw,
     params,
     data,
     time_values,
@@ -93,11 +93,7 @@ def __get_timeseries_data_frame(
             dtype="datetime64[ns]",
             name="Time",
         ),
-        columns=__get_timeseries_data_frame_columns(
-            dw,
-            params,
-            dimension_values,
-        ),
+        columns=__get_timeseries_data_frame_columns(params, dimension_values),
         dtype="Float64",
     ).fillna(value=np.nan)
 
@@ -140,7 +136,7 @@ def __parse_quarter_date_string(date_string):
     return (date_string, format_)
 
 
-def __get_timeseries_data_frame_columns(dw, params, dimension_values):
+def __get_timeseries_data_frame_columns(params, dimension_values):
     if params["dimension"] is None:
         columns = pd.Series(
             data=params["metric"],

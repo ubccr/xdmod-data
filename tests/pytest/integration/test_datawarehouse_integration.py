@@ -529,3 +529,25 @@ def test_get_resources_invalid_service_provider(dw_methods):
     # get_resources is not supported in XDMoD < 11.0.2.
     if XDMOD_CONTAINER != "v11-0-0-1-0":
         assert result == []
+
+
+def test_raw_field_not_found(dw_methods):
+    __test_exception(
+        dw_methods,
+        "get_raw_data",
+        {"fields": [2]},
+        TypeError,
+        _error_messages.RAW_FIELDS_TYPE_ERROR,
+    )
+
+
+def test_raw_field_not_found(dw_methods):
+    __test_exception(
+        dw_methods,
+        "get_raw_data",
+        {"fields": [INVALID_STR]},
+        KeyError,
+        _error_messages.VALUE_NOT_FOUND(
+            "field", INVALID_STR, realm=VALID_VALUES["realm"]
+        ),
+    )

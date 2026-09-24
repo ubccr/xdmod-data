@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 import xdmod_data._error_messages as _error_messages
+import xdmod_data._utilities as _utilities
 
 _PARAM_TYPES = {
     "xdmod_host": "string",
@@ -37,14 +38,22 @@ def _assert_type(param, value):
     return value
 
 
-def _validate_get_data_params(data_warehouse, descriptors, params):
+def _validate_get_data_params(data_warehouse, aggregate_descriptor, params):
     results = {}
     results["start_date"], results["end_date"] = __validate_duration(params["duration"])
-    results["realm"] = _find_realm_id(descriptors, params["realm"])
-    results["metric"] = __find_metric_id(
-        descriptors,
-        results["realm"],
+    results["realm"] = aggregate_descriptor._get_data_id(
+        "realms",
+        params["realm"],
+    )
+    results["metric"] = aggregate_descriptor._get_data_id(
+        "metrics",
         params["metric"],
+        results["realm"],
+    )
+    results["dimension"] = aggregate_descriptor._get_data_id(
+        "dimensions",
+        params["dimension"],
+        results["realm"],
     )
     results["dimension"] = _find_dimension_id(
         descriptors,
@@ -53,7 +62,7 @@ def _validate_get_data_params(data_warehouse, descriptors, params):
     )
     results["filters"] = __validate_filters(
         data_warehouse,
-        descriptors,
+        aggregate_descriptor,
         results["realm"],
         params["filters"],
     )
@@ -70,19 +79,30 @@ def _validate_get_data_params(data_warehouse, descriptors, params):
     return results
 
 
-def _validate_get_raw_data_params(data_warehouse, descriptors, params):
+def _validate_get_raw_data_params(
+    data_warehouse,
+    aggregate_descriptor,
+    raw_descriptor,
+    params,
+):
     results = {}
     results["start_date"], results["end_date"] = __validate_duration(params["duration"])
-    results["realm"] = _find_raw_realm_id(descriptors, params["realm"])
+    results["realm"] = raw_descriptor._get_data_id("realms", params["realm"])
     results["fields"] = __validate_raw_fields(
+        raw_descriptor,
+        results["realm"],
+        params["fields"],
+    )
+    results['realm'] = _find_raw_realm_id(descriptors, params['realm'])
+    results['fields'] = __validate_raw_fields(
         data_warehouse,
         params["realm"],
         params["fields"],
     )
     results["filters"] = __validate_filters(
         data_warehouse,
-        descriptors,
-        params["realm"],
+        aggregate_descriptor,
+        results["realm"],
         params["filters"],
     )
     results["show_progress"] = _assert_type(
@@ -90,23 +110,6 @@ def _validate_get_raw_data_params(data_warehouse, descriptors, params):
         params["show_progress"],
     )
     return results
-
-
-def _find_realm_id(descriptors, realm):
-    return __find_id_in_descriptor(
-        descriptors._get_aggregate(),
-        "realm",
-        realm,
-    )
-
-
-def _find_dimension_id(descriptors, realm, dimension):
-    return __find_metric_or_dimension_id(
-        descriptors,
-        realm,
-        "dimension",
-        dimension,
-    )
 
 
 def _get_durations():
@@ -170,20 +173,15 @@ def __validate_duration(duration):
     return (start_date, end_date)
 
 
-def __find_metric_id(descriptors, realm, metric):
-    return __find_metric_or_dimension_id(
-        descriptors,
-        realm,
-        "metric",
-        metric,
-    )
-
-
-def __validate_filters(data_warehouse, descriptors, realm, filters):
+def __validate_filters(data_warehouse, aggregate_descriptor, realm, filters):
     try:
         result = {}
         for dimension in filters:
-            dimension_id = _find_dimension_id(descriptors, realm, dimension)
+            dimension_id = aggregate_descriptor._get_data_id(
+                "dimensions",
+                dimension,
+                realm,
+            )
             filter_values = filters[dimension]
             if isinstance(filter_values, str):
                 filter_values = [filter_values]
@@ -193,14 +191,14 @@ def __validate_filters(data_warehouse, descriptors, realm, filters):
                 dimension,
             )
             for filter_value in filter_values:
-                new_filter_value = __find_value_in_df(
-                    "filter value",
-                    valid_filter_values,
+                filter_value_id = _utilities._get_id_from_data_frame(
                     filter_value,
+                    valid_filter_values,
+                    "filter value",
                     realm,
                     dimension,
                 )
-                result[dimension_id].append(new_filter_value)
+                result[dimension_id].append(filter_value_id)
         return result
     except TypeError:
         raise TypeError(
@@ -227,7 +225,6 @@ def __validate_raw_fields(data_warehouse, realm, fields):
     type_error_message = _error_messages.TYPE_ERROR("fields", _PARAM_TYPES["fields"])
     try:
         results = []
-        valid_raw_fields = data_warehouse.describe_raw_fields(realm)
         for field in fields:
             if not isinstance(field, str):
                 raise TypeError(type_error_message) from None
@@ -321,17 +318,6 @@ def __get_dates_from_duration(duration):
             date(today.year - num_years, 12, 31),
         )
     return durations_to_dates[duration]
-
-
-def __find_value_in_df(label, df, value, realm=None, dimension=None):
-    if value in df.index:
-        return value
-    elif value in df["label"].values:
-        return df.index[df["label"] == value].tolist()[0]
-    else:
-        raise KeyError(
-            _error_messages.VALUE_NOT_FOUND(label, value, realm, dimension)
-        ) from None
 
 
 def __lowercase_and_remove_spaces(value):
