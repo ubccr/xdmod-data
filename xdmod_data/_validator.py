@@ -93,8 +93,8 @@ def _validate_get_raw_data_params(
         results["realm"],
         params["fields"],
     )
-    results['realm'] = _find_raw_realm_id(descriptors, params['realm'])
-    results['fields'] = __validate_raw_fields(
+    results["realm"] = _find_raw_realm_id(descriptors, params["realm"])
+    results["fields"] = __validate_raw_fields(
         data_warehouse,
         params["realm"],
         params["fields"],
