@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 import re
 import xdmod_data._error_messages as _error_messages
+import xdmod_data._validator as _validator
 from xdmod_data.warehouse import DataWarehouse
 
 VALID_XDMOD_HOST = os.environ["XDMOD_HOST"]
@@ -50,20 +51,43 @@ VALID_VALUES = {
     "show_progress": False,
     "service_provider": "screw",
 }
-KEY_ERROR_TEST_VALUES_AND_MATCHES = {
-    "duration": (INVALID_STR, "Invalid value for `duration`"),
-    "realm": (INVALID_STR, r"Realm .* not found"),
-    "metric": (INVALID_STR, r"Metric .* not found"),
-    "dimension": (INVALID_STR, r"Dimension .* not found"),
-    "filter_key": ({INVALID_STR: INVALID_STR}, r"Dimension .* not found"),
-    "filter_value": (
-        {VALID_DIMENSION: INVALID_STR},
-        r"Filter value .* not found",
-    ),
-    "dataset_type": (INVALID_STR, "Invalid value for `dataset_type`"),
-    "aggregation_unit": (INVALID_STR, "Invalid value for `aggregation_unit`"),
-    "field": (INVALID_STR, r"Field .* not found"),
-}
+
+
+def __get_key_error_test_values_and_matches():
+    result = {}
+    for param in [
+        "duration",
+        "realm",
+        "metric",
+        "dimension",
+        "dataset_type",
+        "aggregation_unit",
+        "filters:key",
+        "filters:value",
+        "fields",
+        "field",
+    ]:
+        param_name = param
+        value = INVALID_STR
+        realm = None
+        dimension = None
+        if param == "filters:key":
+            param_name = "dimension"
+            value = {INVALID_STR: INVALID_STR}
+        if param == "filters:value":
+            param_name = "filter value"
+            value = {VALID_VALUES["dimension"]: INVALID_STR}
+            dimension = VALID_VALUES["dimension"]
+        if param == "fields":
+            param_name = "raw field"
+            value = [INVALID_STR]
+        if param in ["metric", "dimension", "filters:key", "filters:value", "fields"]:
+            realm = VALID_VALUES["realm"]
+        result[param] = (value, _error_messages.VALUE_NOT_FOUND(name=param_name, value=value, realm=realm, dimension=dimension))
+    return result
+
+
+KEY_ERROR_TEST_VALUES_AND_MATCHES = __get_key_error_test_values_and_matches()
 
 key_error_test_ids = []
 duration_test_ids = []
@@ -81,7 +105,7 @@ for method in METHOD_PARAMS:
     for param in METHOD_PARAMS[method]:
         default_valid_params[method][param] = VALID_VALUES[param]
         type_error_test_ids += [method + ":" + param]
-        type_error_test_params += [(method, param)]
+        type_error_test_params += [(method, param, {param: 2})]
         if param in KEY_ERROR_TEST_VALUES_AND_MATCHES:
             key_error_test_ids += [method + ":" + param]
             value, match = KEY_ERROR_TEST_VALUES_AND_MATCHES[param]
@@ -106,10 +130,13 @@ for method in METHOD_PARAMS:
             ]
             value_error_test_methods += [method]
     if "filters" in METHOD_PARAMS[method]:
-        for param in ("filter_key", "filter_value"):
+        for param in ("filters:key", "filters:value"):
             key_error_test_ids += [method + ":" + param]
             value, match = KEY_ERROR_TEST_VALUES_AND_MATCHES[param]
             key_error_test_params += [(method, {"filters": value}, match)]
+    if "fields" in METHOD_PARAMS[method]:
+        type_error_test_params += [(method, "fields", {"fields": [2]})]
+        type_error_test_ids += [f"{method}:fields"]
 
 
 load_dotenv(Path(TOKEN_PATH).expanduser(), override=True)
@@ -149,7 +176,7 @@ def __run_method(
     ):
         with pytest.raises(
             RuntimeError,
-            match=re.escape(_error_messages.GET_RESOURCES(VALID_XDMOD_HOST)),
+            match=re.escape(_error_messages.GET_RESOURCES_NOT_SUPPORTED(VALID_XDMOD_HOST)),
         ):
             dw_methods[method](**params)
     else:
@@ -208,12 +235,12 @@ def test_RuntimeError_date_malformed(dw_methods, method, param, params):
 
 
 @pytest.mark.parametrize(
-    "method, param",
+    "method, param, value",
     type_error_test_params,
     ids=type_error_test_ids,
 )
-def test_TypeError(dw_methods, method, param):
-    __test_exception(dw_methods, method, {param: 2}, TypeError, param)
+def test_TypeError(dw_methods, method, param, value):
+    __test_exception(dw_methods, method, value, TypeError, _error_messages.TYPE_ERROR(param, _validator._PARAM_TYPES[param]))
 
 
 @pytest.mark.parametrize(
@@ -227,7 +254,7 @@ def test_ValueError_duration(dw_methods, method):
         method,
         {"duration": ("1", "2", "3")},
         ValueError,
-        "duration",
+        _error_messages.TYPE_ERROR("duration", _validator._PARAM_TYPES["duration"]),
     )
 
 
@@ -474,6 +501,7 @@ def test_trailing_slashes(dw_methods, method):
 
 
 def test_get_resources_invalid_service_provider(dw_methods):
+    print(f"XDMOD_API_TOKEN {os.environ['XDMOD_API_TOKEN']}")
     result = __run_method(
         dw_methods,
         "get_resources",
