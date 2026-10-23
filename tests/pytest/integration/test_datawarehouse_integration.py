@@ -69,24 +69,30 @@ def __get_key_error_test_values_and_matches():
     ]:
         param_name = param
         value = INVALID_STR
+        value_for_message = value
         realm = None
         dimension = None
         if param == "filters:key":
             param_name = "dimension"
             value = {INVALID_STR: INVALID_STR}
+            value_for_message = INVALID_STR
         if param == "filters:value":
             param_name = "filter value"
             value = {VALID_VALUES["dimension"]: INVALID_STR}
+            value_for_message = INVALID_STR
             dimension = VALID_VALUES["dimension"]
         if param == "fields":
-            param_name = "raw field"
+            param_name = "field"
             value = [INVALID_STR]
         if param in ["metric", "dimension", "filters:key", "filters:value", "fields"]:
             realm = VALID_VALUES["realm"]
         result[param] = (
             value,
             _error_messages.VALUE_NOT_FOUND(
-                name=param_name, value=value, realm=realm, dimension=dimension
+                name=param_name,
+                value=value_for_message,
+                realm=realm,
+                dimension=dimension,
             ),
         )
     return result

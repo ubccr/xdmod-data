@@ -22,14 +22,17 @@ def _assert_runtime_context(in_runtime_context):
 
 
 def _assert_type(param, value):
-    expected_type_description = _PARAM_TYPES[param]
-    if expected_type_description == "string":
+    if _PARAM_TYPES[param] == "string":
         expected_type = str
-    elif expected_type_description == "Boolean":
+    elif _PARAM_TYPES[param] == "Boolean":
         expected_type = bool
+    else:  # pragma: nocover
+        raise TypeError(
+            "Internal error: no handling defined for type '{_PARAM_TYPES[param]}'"
+        ) from None
     if not isinstance(value, expected_type):
         raise TypeError(
-            _error_messages.TYPE_ERROR(param, expected_type_description)
+            _error_messages.TYPE_ERROR(param, _PARAM_TYPES[param])
         ) from None
     return value
 
@@ -161,7 +164,9 @@ def __validate_duration(duration):
         try:
             start_date, end_date = duration
         except (TypeError, ValueError) as error:
-            raise type(error)(_error_messages.TYPE_ERROR("duration")) from None
+            raise type(error)(
+                _error_messages.TYPE_ERROR("duration", _PARAM_TYPES["duration"])
+            ) from None
     return (start_date, end_date)
 
 
@@ -192,15 +197,22 @@ def __validate_filters(data_warehouse, descriptors, realm, filters):
                     "filter value",
                     valid_filter_values,
                     filter_value,
+                    realm,
+                    dimension,
                 )
                 result[dimension_id].append(new_filter_value)
         return result
     except TypeError:
-        raise TypeError(_error_messages.TYPE_ERROR("filters")) from None
+        raise TypeError(
+            _error_messages.TYPE_ERROR("filters", _PARAM_TYPES["filters"])
+        ) from None
 
 
 def __find_str_in_sequence(value, sequence, label):
-    _assert_type(label, value)
+    if not isinstance(value, str):
+        raise TypeError(
+            _error_messages.TYPE_ERROR(label, _PARAM_TYPES[label])
+        ) from None
     transformed_value = __lowercase_and_remove_spaces(value)
     for valid_value in sequence:
         transformed_valid_value = __lowercase_and_remove_spaces(valid_value)
@@ -212,23 +224,26 @@ def __find_str_in_sequence(value, sequence, label):
 
 
 def __validate_raw_fields(data_warehouse, realm, fields):
+    type_error_message = _error_messages.TYPE_ERROR("fields", _PARAM_TYPES["fields"])
     try:
         results = []
         valid_raw_fields = data_warehouse.describe_raw_fields(realm)
         for field in fields:
-            new_field = __find_value_in_df("Field", valid_raw_fields, field)
+            if not isinstance(field, str):
+                raise TypeError(type_error_message) from None
+            new_field = __find_value_in_df("field", valid_raw_fields, field, realm)
             results.append(new_field)
         return results
     except TypeError:
-        raise TypeError(_error_messages.TYPE_ERROR("fields")) from None
+        raise TypeError(type_error_message) from None
 
 
-def __find_id_in_descriptor(descriptor, name, value):
+def __find_id_in_descriptor(descriptor, name, value, realm=None):
     _assert_type(name, value)
     for id_ in descriptor:
         if id_ == value or descriptor[id_]["label"] == value:
             return id_
-    raise KeyError(_error_messages.VALUE_NOT_FOUND(name, value)) from None
+    raise KeyError(_error_messages.VALUE_NOT_FOUND(name, value, realm)) from None
 
 
 def __find_metric_or_dimension_id(descriptors, realm, m_or_d, value):
@@ -236,6 +251,7 @@ def __find_metric_or_dimension_id(descriptors, realm, m_or_d, value):
         descriptors._get_aggregate()[realm][m_or_d + "s"],
         m_or_d,
         value,
+        realm,
     )
 
 
@@ -307,13 +323,15 @@ def __get_dates_from_duration(duration):
     return durations_to_dates[duration]
 
 
-def __find_value_in_df(label, df, value):
+def __find_value_in_df(label, df, value, realm=None, dimension=None):
     if value in df.index:
         return value
     elif value in df["label"].values:
         return df.index[df["label"] == value].tolist()[0]
     else:
-        raise KeyError(_error_messages.VALUE_NOT_FOUND(label, value)) from None
+        raise KeyError(
+            _error_messages.VALUE_NOT_FOUND(label, value, realm, dimension)
+        ) from None
 
 
 def __lowercase_and_remove_spaces(value):

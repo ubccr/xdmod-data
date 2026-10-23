@@ -18,13 +18,7 @@ JUPYTERHUB = (
 )
 
 
-def TYPE_ERROR(param, type_description=None):
-    if param == "duration":
-        type_description = "string or an object with 2 items"
-    elif param == "filters":
-        type_description = "mapping whose keys are strings and whose values are strings or sequences of strings"
-    elif param == "fields":
-        type_description = "sequence of strings"
+def TYPE_ERROR(param, type_description):
     return f"`{param}` must be a {type_description}."
 
 

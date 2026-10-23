@@ -23,7 +23,7 @@ for image in get_config.get_xdmod_images():
     os.environ["XDMOD_HOST"] = f"https://{container_name}"
     os.environ["TOKEN_PATH"] = f"{scratch_dir}/{container_name}.token"
     subprocess.run(
-        f"python3 -m coverage run --data-file={scratch_dir}/coverage --branch --append -m pytest -vvs -o log_cli=true {pytest_args}".split(),
+        f"python3 -m coverage run --data-file={scratch_dir}/coverage --branch --append -m pytest --exitfirst -vvs -o log_cli=true {pytest_args}".split(),
         check=True,
     )
 
