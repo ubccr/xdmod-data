@@ -101,10 +101,10 @@ Additional testing notes:
     ```
     python3 ./tests/scripts/cleanup.py
     ```
-- To test with the notebooks in `xdmod-notebooks`, you can edit their first code
-  cell to replace `xdmod-data` and its version constraints with the following,
-  replacing `username` with your username and `branch-name` with the name of the
-  branch:
+- To test with the notebooks in `xdmod-notebooks`, you can edit their first
+  code cell to replace `xdmod-data` and its version constraints with the
+  following, replacing `username` with your username and `branch-name` with the
+  name of the branch:
     ```
     git+https://github.com/username/xdmod-data.git@branch-name
     ```
@@ -228,13 +228,13 @@ Additional testing notes:
        milestone for the new version under development.
     1. Create a release prep draft PR for the new version under development:
         1. In `CHANGELOG.md`:
-            1. Add a heading for the new version under development with a date of
-               `XXXX-XX-XX`.
+            1. Add a heading for the new version under development with a date
+               of `XXXX-XX-XX`.
             1. If you already know what will be done in the new version under
                development, write a summary of it.
             1. Add the expected compatibility with Open XDMoD versions.
-        1. In `README.md`, add the new version under development to the Open XDMoD
-           compatibility matrix.
+        1. In `README.md`, add the new version under development to the Open
+           XDMoD compatibility matrix.
         1. In `xdmod_data/__version__.py`, change the version number to a
            development release of the new version under development, e.g.,
            `3.0.0.dev1`.
