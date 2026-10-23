@@ -35,7 +35,7 @@ class _Descriptor:
 
     def _get_data_id(self, data_type, value, realm=None):
         param_name = data_type.rstrip("s")
-        _validator._assert_str(param_name, value)
+        _validator._assert_type(param_name, value)
         data_frame = self._get_data_frame(
             data_type,
             realm,
@@ -43,12 +43,11 @@ class _Descriptor:
         data_id = _utilities._get_id_from_data_frame(
             value,
             data_frame,
-            param_name,
             realm,
         )
         if data_id is None:
             raise KeyError(
-                _error_messages.VALUE_NOT_FOUND(param_name, value, realm=realm)
+                _error_messages.VALUE_NOT_FOUND(param_name, value, realm)
             ) from None
         return data_id
 

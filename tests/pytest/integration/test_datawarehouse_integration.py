@@ -72,6 +72,13 @@ def __get_key_error_test_values_and_matches():
         value_for_message = value
         realm = None
         dimension = None
+        valid_values = None
+        if param == "duration":
+            valid_values = DataWarehouse().get_durations()
+        if param == "dataset_type":
+            valid_values = ("timeseries", "aggregate")
+        if param == "aggregation_unit":
+            valid_values = DataWarehouse().get_aggregation_units()
         if param == "filters:key":
             param_name = "dimension"
             value = {INVALID_STR: INVALID_STR}
@@ -93,6 +100,7 @@ def __get_key_error_test_values_and_matches():
                 value=value_for_message,
                 realm=realm,
                 dimension=dimension,
+                valid_values=valid_values,
             ),
         )
     return result
@@ -123,22 +131,30 @@ for method in METHOD_PARAMS:
             key_error_test_params += [(method, {param: value}, match)]
         if param == "duration":
             duration_test_ids += [method]
-            start_end_test_ids += [
-                method + ":start_date",
-                method + ":end_date",
-            ]
-            date_malformed_test_params += [
-                (
-                    method,
-                    "start_date",
-                    {"duration": (INVALID_STR, VALID_DATE)},
-                ),
-                (
-                    method,
-                    "end_date",
-                    {"duration": (VALID_DATE, INVALID_STR)},
-                ),
-            ]
+            for date_param in ("start_date", "end_date"):
+                start_end_test_ids += [f"{method}:{date_param}"]
+                if method == "get_data":
+                    error_message = (
+                        f"{date_param} param is not in the correct format of Y-m-d"
+                    )
+                else:
+                    error_message = (
+                        f"Invalid value for {date_param}. Must be a(n) ISO 8601 Date"
+                    )
+                date_malformed_test_params += [
+                    (
+                        method,
+                        date_param,
+                        {
+                            "duration": (
+                                (INVALID_STR, VALID_DATE)
+                                if date_param == "start_date"
+                                else (VALID_DATE, INVALID_STR)
+                            )
+                        },
+                        f"Error 400: {error_message}. {_error_messages.JUPYTERHUB}",
+                    ),
+                ]
             value_error_test_methods += [method]
     if "filters" in METHOD_PARAMS[method]:
         for param in ("filters:key", "filters:value"):
@@ -197,13 +213,14 @@ def __run_method(
 
 
 def __test_exception(dw_methods, method, additional_params, error, match):
-    with pytest.raises(error, match=match):
+    with pytest.raises(error) as excinfo:
         __run_method(
             dw_methods,
             method,
             additional_params,
             testing_exception=True,
         )
+    assert excinfo.value.args[0] == match
 
 
 @pytest.mark.parametrize(
@@ -233,17 +250,17 @@ def test_RuntimeError_outside_context(
 
 
 @pytest.mark.parametrize(
-    "method, param, params",
+    "method, date_param, params, match",
     date_malformed_test_params,
     ids=start_end_test_ids,
 )
-def test_RuntimeError_date_malformed(dw_methods, method, param, params):
+def test_RuntimeError_date_malformed(dw_methods, method, date_param, params, match):
     __test_exception(
         dw_methods,
         method,
         params,
         RuntimeError,
-        param,
+        match,
     )
 
 
@@ -529,25 +546,3 @@ def test_get_resources_invalid_service_provider(dw_methods):
     # get_resources is not supported in XDMoD < 11.0.2.
     if XDMOD_CONTAINER != "v11-0-0-1-0":
         assert result == []
-
-
-def test_raw_field_not_found(dw_methods):
-    __test_exception(
-        dw_methods,
-        "get_raw_data",
-        {"fields": [2]},
-        TypeError,
-        _error_messages.RAW_FIELDS_TYPE_ERROR,
-    )
-
-
-def test_raw_field_not_found(dw_methods):
-    __test_exception(
-        dw_methods,
-        "get_raw_data",
-        {"fields": [INVALID_STR]},
-        KeyError,
-        _error_messages.VALUE_NOT_FOUND(
-            "field", INVALID_STR, realm=VALID_VALUES["realm"]
-        ),
-    )

@@ -1,7 +1,6 @@
 def _get_id_from_data_frame(
     value,
     data_frame,
-    data_type_label,
     realm=None,
 ):
     matches = data_frame.index[

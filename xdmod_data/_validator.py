@@ -12,6 +12,7 @@ _PARAM_TYPES = {
     "dataset_type": "string",
     "aggregation_unit": "string",
     "fields": "sequence of strings",
+    "field": "string",
     "show_progress": "Boolean",
     "service_provider": "string",
 }
@@ -29,7 +30,7 @@ def _assert_type(param, value):
         expected_type = bool
     else:  # pragma: nocover
         raise TypeError(
-            "Internal error: no handling defined for type '{_PARAM_TYPES[param]}'"
+            f"Internal error: no handling defined for type '{_PARAM_TYPES[param]}'"
         ) from None
     if not isinstance(value, expected_type):
         raise TypeError(
@@ -54,11 +55,6 @@ def _validate_get_data_params(data_warehouse, aggregate_descriptor, params):
         "dimensions",
         params["dimension"],
         results["realm"],
-    )
-    results["dimension"] = _find_dimension_id(
-        descriptors,
-        results["realm"],
-        params["dimension"],
     )
     results["filters"] = __validate_filters(
         data_warehouse,
@@ -91,12 +87,6 @@ def _validate_get_raw_data_params(
     results["fields"] = __validate_raw_fields(
         raw_descriptor,
         results["realm"],
-        params["fields"],
-    )
-    results["realm"] = _find_raw_realm_id(descriptors, params["realm"])
-    results["fields"] = __validate_raw_fields(
-        data_warehouse,
-        params["realm"],
         params["fields"],
     )
     results["filters"] = __validate_filters(
@@ -147,14 +137,6 @@ def _get_aggregation_units():
     )
 
 
-def _find_raw_realm_id(descriptors, realm):
-    return __find_id_in_descriptor(
-        descriptors._get_raw(),
-        "realm",
-        realm,
-    )
-
-
 def __validate_duration(duration):
     if isinstance(duration, str):
         duration = __find_str_in_sequence(
@@ -194,16 +176,18 @@ def __validate_filters(data_warehouse, aggregate_descriptor, realm, filters):
                 filter_value_id = _utilities._get_id_from_data_frame(
                     filter_value,
                     valid_filter_values,
-                    "filter value",
                     realm,
-                    dimension,
                 )
+                if filter_value_id is None:
+                    raise KeyError(
+                        _error_messages.VALUE_NOT_FOUND(
+                            "filter value", filter_value, realm, dimension
+                        )
+                    ) from None
                 result[dimension_id].append(filter_value_id)
         return result
     except TypeError:
-        raise TypeError(
-            _error_messages.TYPE_ERROR("filters", _PARAM_TYPES["filters"])
-        ) from None
+        raise TypeError(_error_messages.TYPE_ERROR("filters", _PARAM_TYPES["filters"]))
 
 
 def __find_str_in_sequence(value, sequence, label):
@@ -221,35 +205,20 @@ def __find_str_in_sequence(value, sequence, label):
     ) from None
 
 
-def __validate_raw_fields(data_warehouse, realm, fields):
+def __validate_raw_fields(raw_descriptor, realm, fields):
     type_error_message = _error_messages.TYPE_ERROR("fields", _PARAM_TYPES["fields"])
     try:
         results = []
         for field in fields:
-            if not isinstance(field, str):
-                raise TypeError(type_error_message) from None
-            new_field = __find_value_in_df("field", valid_raw_fields, field, realm)
-            results.append(new_field)
+            field_id = raw_descriptor._get_data_id("fields", field, realm)
+            if field_id is None:
+                raise KeyError(
+                    _error_messages.VALUE_NOT_FOUND("field", filter_value, realm)
+                ) from None
+            results.append(field_id)
         return results
     except TypeError:
         raise TypeError(type_error_message) from None
-
-
-def __find_id_in_descriptor(descriptor, name, value, realm=None):
-    _assert_type(name, value)
-    for id_ in descriptor:
-        if id_ == value or descriptor[id_]["label"] == value:
-            return id_
-    raise KeyError(_error_messages.VALUE_NOT_FOUND(name, value, realm)) from None
-
-
-def __find_metric_or_dimension_id(descriptors, realm, m_or_d, value):
-    return __find_id_in_descriptor(
-        descriptors._get_aggregate()[realm][m_or_d + "s"],
-        m_or_d,
-        value,
-        realm,
-    )
 
 
 def __get_dates_from_duration(duration):
