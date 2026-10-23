@@ -47,7 +47,7 @@ METADATA = {
 
 def footer(docmeta=None):
 
-    footermd = ''
+    footermd = ""
     if docmeta:
         footermd = """
 # Document Version History
@@ -55,8 +55,8 @@ def footer(docmeta=None):
 | ------- | ----- | ----- |
 """
 
-        for entry in docmeta['history']:
-            footermd += '| ' + ' | '.join(entry) + ' |\n'
+        for entry in docmeta["history"]:
+            footermd += "| " + " | ".join(entry) + " |\n"
 
     footermd += """
 
