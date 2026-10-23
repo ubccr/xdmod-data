@@ -96,11 +96,8 @@ Additional testing notes:
     ```
     python3 ./tests/scripts/docker_compose.py down
     ```
-- To clean up temporary files used for testing (certificates, tokens,
-  `__pycache__` directories, and coverage data files):
-    ```
-    python3 ./tests/scripts/cleanup.py
-    ```
+- To clean up temporary files used for testing, remove the files in
+  `tests/scratch`.
 - To test with the notebooks in `xdmod-notebooks`, you can edit their first
   code cell to replace `xdmod-data` and its version constraints with the
   following, replacing `username` with your username and `branch-name` with the
