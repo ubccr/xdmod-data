@@ -83,7 +83,12 @@ def __get_key_error_test_values_and_matches():
             value = [INVALID_STR]
         if param in ["metric", "dimension", "filters:key", "filters:value", "fields"]:
             realm = VALID_VALUES["realm"]
-        result[param] = (value, _error_messages.VALUE_NOT_FOUND(name=param_name, value=value, realm=realm, dimension=dimension))
+        result[param] = (
+            value,
+            _error_messages.VALUE_NOT_FOUND(
+                name=param_name, value=value, realm=realm, dimension=dimension
+            ),
+        )
     return result
 
 
@@ -176,7 +181,9 @@ def __run_method(
     ):
         with pytest.raises(
             RuntimeError,
-            match=re.escape(_error_messages.GET_RESOURCES_NOT_SUPPORTED(VALID_XDMOD_HOST)),
+            match=re.escape(
+                _error_messages.GET_RESOURCES_NOT_SUPPORTED(VALID_XDMOD_HOST)
+            ),
         ):
             dw_methods[method](**params)
     else:
@@ -240,7 +247,13 @@ def test_RuntimeError_date_malformed(dw_methods, method, param, params):
     ids=type_error_test_ids,
 )
 def test_TypeError(dw_methods, method, param, value):
-    __test_exception(dw_methods, method, value, TypeError, _error_messages.TYPE_ERROR(param, _validator._PARAM_TYPES[param]))
+    __test_exception(
+        dw_methods,
+        method,
+        value,
+        TypeError,
+        _error_messages.TYPE_ERROR(param, _validator._PARAM_TYPES[param]),
+    )
 
 
 @pytest.mark.parametrize(

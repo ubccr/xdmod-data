@@ -28,7 +28,9 @@ def _assert_type(param, value):
     elif expected_type_description == "Boolean":
         expected_type = bool
     if not isinstance(value, expected_type):
-        raise TypeError(_error_messages.TYPE_ERROR(param, expected_type_description)) from None
+        raise TypeError(
+            _error_messages.TYPE_ERROR(param, expected_type_description)
+        ) from None
     return value
 
 
@@ -204,7 +206,9 @@ def __find_str_in_sequence(value, sequence, label):
         transformed_valid_value = __lowercase_and_remove_spaces(valid_value)
         if transformed_valid_value == transformed_value:
             return valid_value
-    raise KeyError(_error_messages.VALUE_NOT_FOUND(label, value, valid_values=sequence)) from None
+    raise KeyError(
+        _error_messages.VALUE_NOT_FOUND(label, value, valid_values=sequence)
+    ) from None
 
 
 def __validate_raw_fields(data_warehouse, realm, fields):
