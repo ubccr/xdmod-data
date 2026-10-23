@@ -3,8 +3,8 @@
 from pathlib import Path
 import subprocess
 
-scripts_dir = Path(__file__).parent.resolve()
-project_dir = (scripts_dir / ".." / "..").resolve()
+scripts_dir = Path(__file__).resolve().parent
+project_dir = scripts_dir / ".." / ".."
 
 print("Formatting with Black...")
 subprocess.run(

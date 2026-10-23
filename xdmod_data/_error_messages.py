@@ -17,17 +17,34 @@ JUPYTERHUB = (
     " obtained from the XDMoD portal."
 )
 
-INVALID_DURATION = "`duration` must be a string or an object with 2 items."
 
-INVALID_FILTERS = (
-    "`filters` must be a mapping whose keys are strings and whose values are"
-    " strings or sequences of strings."
-)
+def TYPE_ERROR(param, type_description=None):
+    if param == "duration":
+        type_description = "string or an object with 2 items"
+    elif param == "filters":
+        type_description = "mapping whose keys are strings and whose values are strings or sequences of strings"
+    elif param == "fields":
+        type_description = "sequence of strings"
+    return f"`{param}` must be a {type_description}."
 
-INVALID_RAW_FIELDS = "`fields` must be a sequence of strings."
+
+def VALUE_NOT_FOUND(name, value, realm=None, dimension=None, valid_values=None):
+    if name == "field":
+        value_text = "Raw field"
+    elif name == "filter value":
+        value_text = "Filter value"
+    else:
+        value_text = f"Value for `{name}`"
+    realm_text = "" if realm is None else f" in the '{realm}' realm"
+    dimension_text = "" if dimension is None else f" for the '{dimension}' dimension"
+    valid_values_sentence = ""
+    if valid_values is not None:
+        valid_values_str = "', '".join(valid_values)
+        valid_values_sentence = f" Value values are: '{valid_values_str}'"
+    return f"{value_text} not found{dimension_text}{realm_text}: '{value}'.{valid_values_sentence}"
 
 
-def GET_RESOURCES(host):
+def GET_RESOURCES_NOT_SUPPORTED(host):
     return (
         f"The requested XDMoD portal ({host}) is not running a version of"
         " XDMoD that supports the `get_resources` method."

@@ -67,7 +67,6 @@ def run(command):
 
 
 if command == "up":
-    # run("up -d --pull always")
-    run("up -d")
+    run("up -d --pull always")
 elif command == "down":
     run("down")

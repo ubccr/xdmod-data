@@ -11,7 +11,7 @@ from xdmod_data.__version__ import __title__, __version__
 class _HttpRequester:
     def __init__(self, xdmod_host):
         self.__in_runtime_context = False
-        _validator._assert_str("xdmod_host", xdmod_host)
+        _validator._assert_type("xdmod_host", xdmod_host)
         xdmod_host = re.sub("/+$", "", xdmod_host)
         self.__xdmod_host = xdmod_host
         self.__api_token = os.getenv("XDMOD_API_TOKEN")
@@ -123,7 +123,7 @@ class _HttpRequester:
     def _request_resources(self, service_provider):
         url_params = ""
         if service_provider is not None:
-            _validator._assert_str("service_provider", service_provider)
+            _validator._assert_type("service_provider", service_provider)
             url_params = "?" + urlencode(
                 {
                     "service_provider": service_provider,
@@ -136,7 +136,7 @@ class _HttpRequester:
         except RuntimeError as e:
             if "Error 404" in str(e):
                 raise RuntimeError(
-                    _error_messages.GET_RESOURCES(self.__xdmod_host)
+                    _error_messages.GET_RESOURCES_NOT_SUPPORTED(self.__xdmod_host)
                 ) from None
             raise  # pragma: no cover
         return result["results"]

@@ -6,6 +6,6 @@ import subprocess
 project_dir = Path(__file__).resolve().parent.parent.parent
 
 subprocess.run(
-    f"python3 -m pip install -e .[report] black coverage flake8 pytest python-dotenv pyyaml tenacity".split(),
+    f"python3 -m pip install -e {project_dir}[report] black coverage flake8 pytest python-dotenv pyyaml tenacity".split(),
     check=True,
 )
