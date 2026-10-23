@@ -1,11 +1,24 @@
 version: 2.1
+
+setup: true
+
+orbs:
+  continuation: circleci/continuation@2.0.1  # Version number is arbitrary.
+
 jobs:
-  build:
+  setup:
     docker:
-      - image: cimg/base:current
+      # Use Python convenience image so pip is available.
+      # Version number is arbitrary.
+      - image: cimg/python:3.14
     steps:
       - checkout
-      - setup_remote_docker
-      - run:
-          name: Spin up containers and test different Python versions against different XDMoD web server versions
-          command: ./tests/ci/scripts/run-tests.sh
+      - run: python3 ./tests/scripts/install_dependencies.py
+      - run: python3 ./tests/scripts/generate_circleci_config.py > generated_config.yml
+      - continuation/continue:
+          configuration_path: generated_config.yml
+
+workflows:
+  setup:
+    jobs:
+      - setup

@@ -2,16 +2,112 @@
 
 ## Testing the code
 
-A testing script is available in `tests/ci/bootstrap.sh`. It requires Docker
-Compose and `yq`.
+CircleCI will automatically run tests on Pull Requests to the `xdmod-data`
+GitHub repository. `xdmod-data` will be tested against multiple Open XDMoD
+portals, each running a different branch/tag of the `xdmod` repository. Each
+Open XDMoD portal runs in a Docker container; the images for these are hosted
+in the registry `tools-ext-01.ccr.xdmod.org/xdmod`, and the tags used for
+testing are defined in `tests/config.yml` under `xdmod_images`.
 
-To test with the notebooks in `xdmod-notebooks`, you can edit their first code
-cell to replace `xdmod-data` and its version constraints with the following,
-replacing `username` with your username and `branch-name` with the name of the
-branch:
-```
-git+https://github.com/username/xdmod-data.git@branch-name
-```
+`tests/config.yml` also defines the maximum Python version that should be
+tested. This version will be tested along with the minimum supported versions
+of Python and `xdmod-data`'s dependencies, as defined in `pyproject.toml`.
+The two versions of Python will be tested in their own containers using the
+CircleCI `cimg/python` convenience images.
+
+Testing the code manually/locally involves using Docker Compose to emulate the
+CircleCI setup. You will need to have Docker running and follow these steps:
+
+1. If you wish to rename the containers and/or network that will be created,
+   edit `tests/config.yml` and add a `container_names` property that maps names
+   from `xdmod_images` to the container names. You can also rename the
+   containers used for testing the minimum and maximum Python versions by
+   defining names for `python-min` and `python-max`, respectively. You can also
+   set either one of these to `null`, in which case the corresponding Python
+   container will not be created. Note that you do NOT need to rename every
+   container. You can rename the network using the `network_name` property. For
+   example, the following definition will rename only the last two XDMoD
+   containers as well as the container that tests the maximum Python version
+   and the network. It also makes it so the minimum Python container is not
+   created:
+    ```yaml
+    xdmod_images:
+      - xdmod-data-main
+      - xdmod-data-xdmod11-0
+      - xdmod-data-v11-0-0-1-0
+    container_names:
+      xdmod-data-xdmod11-0: my-custom-name-1
+      xdmod-data-v11-0-0-1-0: my-custom-name-2
+      python-min: null
+      python-max: my-custom-name-3
+    network: my-custom-name-4
+    ```
+1. Start up the Docker Compose application stack (this will also pull the
+   latest versions of the images from `tests/config.yml` and install the
+   `tomli` library if needed):
+    ```
+    python3 ./tests/scripts/docker_compose.py up
+    ```
+1. Install dependencies and set up each of the Python containers you want to
+   test with. For example, for Python 3.8 and Python 3.14:
+    ```
+    docker exec xdmod-data-python-3.8 python3 ./tests/scripts/install_dependencies.py
+    docker exec xdmod-data-python-3.8 python3 ./tests/scripts/setup.py
+    docker exec xdmod-data-python-3.14 python3 ./tests/scripts/install_dependencies.py
+    docker exec xdmod-data-python-3.14 python3 ./tests/scripts/setup.py
+    ```
+1. If you will be testing the minimum Python version, downgrade the
+   dependencies in that container. For example, for Python 3.8:
+    ```
+    docker exec xdmod-data-python-3.8 python3 ./tests/scripts/downgrade_dependencies.py
+    ```
+1. Run the tests in each Python container(s) you want to test with. For
+   example, for Python 3.8 and Python 3.14:
+    ```
+    docker exec xdmod-data-python-3.8 python3 ./tests/scripts/run_tests.py
+    docker exec xdmod-data-python-3.14 python3 ./tests/scripts/run_tests.py
+    ```
+
+Additional testing notes:
+- Changing the code locally will automatically update it in the Docker
+  container because the Docker Compose application stack includes shared
+  volumes.
+- If you want to run specific Pytest test(s), include it/them as arguments to
+  `run_tests.py`. For example:
+    ```
+    docker exec xdmod-data-python-3.14 python3 ./tests/scripts/run_tests.py tests/pytest/regression/test_datawarehouse_regression.py::test_get_data[month]
+    ```
+- You can generate new regression test artifacts by adding the
+  `GENERATE_DATA_FILES` environment variable:
+    ```
+    docker exec -e GENERATE_DATA_FILES=1 xdmod-data-python-3.14 python3 ./tests/scripts/run_tests.py ./tests/pytest/regression
+    ```
+- `xdmod-data` uses [Black](https://github.com/psf/black) for Python code
+  formatting. The CI testing for `xdmod-data` requires the Python files to be
+  formatted. To format the files, run the following:
+    ```
+    docker exec xdmod-data-python-3.14 python3 ./tests/scripts/format.py
+    ```
+- To lint the code:
+    ```
+    docker exec xdmod-data-python-3.14 python3 ./tests/scripts/lint.py
+    ```
+- If you need to delete the Docker Compose application stack, run:
+    ```
+    python3 ./tests/scripts/docker_compose.py down
+    ```
+- To clean up temporary files used for testing (certificates, tokens,
+  `__pycache__` directories, and coverage data files):
+    ```
+    python3 ./tests/scripts/cleanup.py
+    ```
+- To test with the notebooks in `xdmod-notebooks`, you can edit their first
+  code cell to replace `xdmod-data` and its version constraints with the
+  following, replacing `username` with your username and `branch-name` with the
+  name of the branch:
+    ```
+    git+https://github.com/username/xdmod-data.git@branch-name
+    ```
 
 ## Contributing a Pull Request (PR)
 
@@ -132,13 +228,13 @@ git+https://github.com/username/xdmod-data.git@branch-name
        milestone for the new version under development.
     1. Create a release prep draft PR for the new version under development:
         1. In `CHANGELOG.md`:
-            1. Add a heading for the new version under development with a date of
-               `XXXX-XX-XX`.
+            1. Add a heading for the new version under development with a date
+               of `XXXX-XX-XX`.
             1. If you already know what will be done in the new version under
                development, write a summary of it.
             1. Add the expected compatibility with Open XDMoD versions.
-        1. In `README.md`, add the new version under development to the Open XDMoD
-           compatibility matrix.
+        1. In `README.md`, add the new version under development to the Open
+           XDMoD compatibility matrix.
         1. In `xdmod_data/__version__.py`, change the version number to a
            development release of the new version under development, e.g.,
            `3.0.0.dev1`.

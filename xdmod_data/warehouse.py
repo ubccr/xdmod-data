@@ -9,46 +9,46 @@ import xdmod_data._validator as _validator
 
 class DataWarehouse:
     """Request data from the data warehouse of an XDMoD portal via the XDMoD
-       REST API.
+    REST API.
 
-       Methods must be called within a runtime context using the ``with``
-       keyword, e.g.,
+    Methods must be called within a runtime context using the ``with``
+    keyword, e.g.,
 
-       >>> with DataWarehouse() as dw:
-       ...     dw.get_data()
+    >>> with DataWarehouse() as dw:
+    ...     dw.get_data()
 
-       If running in an XDMoD-hosted JupyterHub, authentication will happen
-       automatically when requests are made. If not running in an XDMoD-hosted
-       JupyterHub, before constructing the `DataWarehouse`, the
-       `XDMOD_API_TOKEN` environment variable must be set to an API token
-       obtained from the XDMoD portal.
+    If running in an XDMoD-hosted JupyterHub, authentication will happen
+    automatically when requests are made. If not running in an XDMoD-hosted
+    JupyterHub, before constructing the `DataWarehouse`, the
+    `XDMOD_API_TOKEN` environment variable must be set to an API token
+    obtained from the XDMoD portal.
 
-       Parameters
-       ----------
-       xdmod_host : str, optional
-           The URL of the XDMoD portal from which data will be requested.
-           Defaults to None, in which case the URL will instead be obtained
-           from the `XDMOD_HOST` environment variable; if running in an
-           XDMoD-hosted JupyterHub, this environment variable is set
-           automatically. If not running in an XDMoD-hosted JupyterHub, or to
-           get data from a different XDMoD portal, `xdmod_host` must be
-           specified.
+    Parameters
+    ----------
+    xdmod_host : str, optional
+        The URL of the XDMoD portal from which data will be requested.
+        Defaults to None, in which case the URL will instead be obtained
+        from the `XDMOD_HOST` environment variable; if running in an
+        XDMoD-hosted JupyterHub, this environment variable is set
+        automatically. If not running in an XDMoD-hosted JupyterHub, or to
+        get data from a different XDMoD portal, `xdmod_host` must be
+        specified.
 
-       Raises
-       ------
-       TypeError
-           If the `xdmod_host` parameter and `XDMOD_HOST` environment variable
-           are both not set or if `xdmod_host` is set and is not a string.
+    Raises
+    ------
+    TypeError
+        If the `xdmod_host` parameter and `XDMOD_HOST` environment variable
+        are both not set or if `xdmod_host` is set and is not a string.
     """
 
     def __init__(self, xdmod_host=None):
         self.__in_runtime_context = False
         if xdmod_host is None:
-            xdmod_host = os.getenv('XDMOD_HOST')
+            xdmod_host = os.getenv("XDMOD_HOST")
             if xdmod_host is None:
                 raise TypeError(
-                    '`xdmod_host` parameter or `XDMOD_HOST` environment'
-                    + ' variable must be set.',
+                    "`xdmod_host` parameter or `XDMOD_HOST` environment"
+                    + " variable must be set.",
                 ) from None
         self.__http_requester = _HttpRequester(xdmod_host)
         self.__descriptors = _Descriptors(self.__http_requester)
@@ -64,85 +64,85 @@ class DataWarehouse:
 
     def get_data(
         self,
-        duration='Previous month',
-        realm='Jobs',
-        metric='CPU Hours: Total',
-        dimension='None',
+        duration="Previous month",
+        realm="Jobs",
+        metric="CPU Hours: Total",
+        dimension="None",
         filters={},
-        dataset_type='timeseries',
-        aggregation_unit='Auto',
+        dataset_type="timeseries",
+        aggregation_unit="Auto",
     ):
         """Get a data frame or series containing data from the warehouse.
 
-           If `dataset_type` is 'timeseries', a Pandas DataFrame is returned.
-           The data in the DataFrame are the float64 values for the
-           corresponding values of time, `metric`, and `dimension`. Missing
-           values are filled in with the value `np.nan`. In the DataFrame, the
-           index is a DatetimeIndex with the name 'Time' that contains the time
-           values for the given `duration` in increments determined by
-           `aggregation_unit`. If `dimension` is 'None', the DataFrame columns
-           are an index named 'Metric' whose datum is the label of the given
-           `metric`. If `dimension` is not 'None', the DataFrame columns are an
-           index whose name is the label of the given `dimension` and whose
-           data are the labels of each of the values of the given `dimension`.
+        If `dataset_type` is 'timeseries', a Pandas DataFrame is returned.
+        The data in the DataFrame are the float64 values for the
+        corresponding values of time, `metric`, and `dimension`. Missing
+        values are filled in with the value `np.nan`. In the DataFrame, the
+        index is a DatetimeIndex with the name 'Time' that contains the time
+        values for the given `duration` in increments determined by
+        `aggregation_unit`. If `dimension` is 'None', the DataFrame columns
+        are an index named 'Metric' whose datum is the label of the given
+        `metric`. If `dimension` is not 'None', the DataFrame columns are an
+        index whose name is the label of the given `dimension` and whose
+        data are the labels of each of the values of the given `dimension`.
 
-           If `dataset_type` is 'aggregate', a Pandas Series is returned. The
-           data in the Series are the float64 values for the corresponding
-           value of `dimension`. Missing values are filled in with the value
-           `np.nan`. If `dimension` is 'None', the Series is unnamed, and the
-           index is unnamed and contains only the label of the given `metric`.
-           If `dimension` is not 'None', the name of the Series is the label of
-           the given `metric`, the name of the index is the label of the given
-           `dimension`, and the index contains the labels of each of the values
-           of the given `dimension`.
+        If `dataset_type` is 'aggregate', a Pandas Series is returned. The
+        data in the Series are the float64 values for the corresponding
+        value of `dimension`. Missing values are filled in with the value
+        `np.nan`. If `dimension` is 'None', the Series is unnamed, and the
+        index is unnamed and contains only the label of the given `metric`.
+        If `dimension` is not 'None', the name of the Series is the label of
+        the given `metric`, the name of the index is the label of the given
+        `dimension`, and the index contains the labels of each of the values
+        of the given `dimension`.
 
-           Parameters
-           ----------
-           duration : str or object of length 2 of str, optional
-               The time period over which to collect data. Either a string
-               value from `get_durations()` (case insensitive) or an object of
-               length two with start and end dates specified in 'YYYY-MM-DD'
-               format.
-           realm : str, optional
-               A realm in the data warehouse. Can be specified by its ID or its
-               label. See `describe_realms()`.
-           metric : str, optional
-               A metric in the given realm of the data warehouse. Can be
-               specified by its ID or its label. See `describe_metrics()`.
-           dimension : str, optional
-               A dimension of the given realm in the data warehouse. Can be
-               specified by its ID or its label. See `describe_dimensions()`.
-           filters : mapping, optional
-               A mapping of dimensions to their possible values. Results will
-               only be included whose values for each of the given dimensions
-               match one of the corresponding given values.
-           dataset_type : str, optional
-               Either 'timeseries' or 'aggregate'.
-           aggregation_unit : str, optional
-               The units by which to aggregate data. Must be one of the valid
-               values from `get_aggregation_units()` (case insensitive).
+        Parameters
+        ----------
+        duration : str or object of length 2 of str, optional
+            The time period over which to collect data. Either a string
+            value from `get_durations()` (case insensitive) or an object of
+            length two with start and end dates specified in 'YYYY-MM-DD'
+            format.
+        realm : str, optional
+            A realm in the data warehouse. Can be specified by its ID or its
+            label. See `describe_realms()`.
+        metric : str, optional
+            A metric in the given realm of the data warehouse. Can be
+            specified by its ID or its label. See `describe_metrics()`.
+        dimension : str, optional
+            A dimension of the given realm in the data warehouse. Can be
+            specified by its ID or its label. See `describe_dimensions()`.
+        filters : mapping, optional
+            A mapping of dimensions to their possible values. Results will
+            only be included whose values for each of the given dimensions
+            match one of the corresponding given values.
+        dataset_type : str, optional
+            Either 'timeseries' or 'aggregate'.
+        aggregation_unit : str, optional
+            The units by which to aggregate data. Must be one of the valid
+            values from `get_aggregation_units()` (case insensitive).
 
-           Returns
-           -------
-           pandas.core.frame.DataFrame | pandas.core.series.Series
+        Returns
+        -------
+        pandas.core.frame.DataFrame | pandas.core.series.Series
 
-           Raises
-           ------
-           KeyError
-               If any of the parameters have invalid values. Valid realms
-               come from `describe_realms()`, valid metrics come from
-               `describe_metrics()`, valid dimensions and filter keys come from
-               `describe_dimensions()`, valid filter values come from
-               `get_filter_values()`, valid durations come from
-               `get_durations()`, and aggregation units come from
-               `get_aggregation_units()`.
-           RuntimeError
-               If this method is called outside the runtime context or if
-               there is an error requesting data from the warehouse.
-           TypeError
-               If any of the arguments are of the wrong type.
-           ValueError
-               If `duration` is an object but not of length 2.
+        Raises
+        ------
+        KeyError
+            If any of the parameters have invalid values. Valid realms
+            come from `describe_realms()`, valid metrics come from
+            `describe_metrics()`, valid dimensions and filter keys come from
+            `describe_dimensions()`, valid filter values come from
+            `get_filter_values()`, valid durations come from
+            `get_durations()`, and aggregation units come from
+            `get_aggregation_units()`.
+        RuntimeError
+            If this method is called outside the runtime context or if
+            there is an error requesting data from the warehouse.
+        TypeError
+            If any of the arguments are of the wrong type.
+        ValueError
+            If `duration` is an object but not of length 2.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
         params = _validator._validate_get_data_params(
@@ -167,51 +167,51 @@ class DataWarehouse:
     ):
         """Get a data frame containing raw data from the warehouse.
 
-           Parameters
-           ----------
-           duration : str or object of length 2 of str
-               The time period over which to collect data. Either a string
-               value from `get_durations()` (case insensitive) or an object of
-               length two with start and end dates specified in 'YYYY-MM-DD'
-               format.
-           realm : str
-               A realm in the data warehouse. Can be specified by its ID or its
-               label. See `describe_realms()`.
-           fields : sequence of str, optional
-               The raw data fields to include in the results. See
-               `describe_raw_fields()`.
-           filters : mapping, optional
-               A mapping of dimensions to their possible values. Results will
-               only be included whose values for each of the given dimensions
-               match one of the corresponding given values.
-           show_progress : bool, optional
-               If true, periodically print how many rows have been gotten so
-               far.
+        Parameters
+        ----------
+        duration : str or object of length 2 of str
+            The time period over which to collect data. Either a string
+            value from `get_durations()` (case insensitive) or an object of
+            length two with start and end dates specified in 'YYYY-MM-DD'
+            format.
+        realm : str
+            A realm in the data warehouse. Can be specified by its ID or its
+            label. See `describe_realms()`.
+        fields : sequence of str, optional
+            The raw data fields to include in the results. See
+            `describe_raw_fields()`.
+        filters : mapping, optional
+            A mapping of dimensions to their possible values. Results will
+            only be included whose values for each of the given dimensions
+            match one of the corresponding given values.
+        show_progress : bool, optional
+            If true, periodically print how many rows have been gotten so
+            far.
 
-           Returns
-           -------
-           pandas.core.frame.DataFrame
-               The columns of the data frame are each of the given `fields`.
-               The data in the data frame are each of the corresponding values
-               for the given `fields`. Missing values are filled with the value
-               `numpy.nan`.
+        Returns
+        -------
+        pandas.core.frame.DataFrame
+            The columns of the data frame are each of the given `fields`.
+            The data in the data frame are each of the corresponding values
+            for the given `fields`. Missing values are filled with the value
+            `numpy.nan`.
 
-           Raises
-           ------
-           KeyError
-               If any of the parameters have invalid values. Valid durations
-               come from `get_durations()`, valid realms come from
-               `describe_raw_realms()`, valid filters keys come from
-               `describe_dimensions()`, valid filter values come from
-               `get_filter_values()`, and valid fields come from
-               `describe_raw_fields()`.
-           RuntimeError
-               If this method is called outside the runtime context or if
-               there is an error requesting data from the warehouse.
-           TypeError
-               If any of the arguments are of the wrong type.
-           ValueError
-               If `duration` is an object but not of length 2.
+        Raises
+        ------
+        KeyError
+            If any of the parameters have invalid values. Valid durations
+            come from `get_durations()`, valid realms come from
+            `describe_raw_realms()`, valid filters keys come from
+            `describe_dimensions()`, valid filter values come from
+            `get_filter_values()`, and valid fields come from
+            `describe_raw_fields()`.
+        RuntimeError
+            If this method is called outside the runtime context or if
+            there is an error requesting data from the warehouse.
+        TypeError
+            If any of the arguments are of the wrong type.
+        ValueError
+            If `duration` is an object but not of length 2.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
         params = _validator._validate_get_raw_data_params(
@@ -219,115 +219,115 @@ class DataWarehouse:
             self.__descriptors,
             locals(),
         )
-        (data, column_data) = self.__http_requester._request_raw_data(params)
+        data, column_data = self.__http_requester._request_raw_data(params)
         return self.__get_data_frame(data, column_data)
 
     def describe_realms(self):
         """Get a data frame describing the valid realms in the data warehouse.
 
-           Returns
-           -------
-           pandas.core.frame.DataFrame
-               A Pandas DataFrame containing the ID and label of each realm.
+        Returns
+        -------
+        pandas.core.frame.DataFrame
+            A Pandas DataFrame containing the ID and label of each realm.
 
-           Raises
-           ------
-           RuntimeError
-               If this method is called outside the runtime context or if
-               there is an error requesting data from the warehouse.
+        Raises
+        ------
+        RuntimeError
+            If this method is called outside the runtime context or if
+            there is an error requesting data from the warehouse.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
         return self.__get_data_frame_from_descriptor(
             self.__descriptors._get_aggregate(),
-            ('id', 'label'),
-            'id',
+            ("id", "label"),
+            "id",
         )
 
     def describe_metrics(self, realm):
         """Get a data frame describing the valid metrics for the given realm.
 
-           Parameters
-           ----------
-           realm : str
-               A realm in the data warehouse. Can be specified by its ID or its
-               label. See `describe_realms()`.
+        Parameters
+        ----------
+        realm : str
+            A realm in the data warehouse. Can be specified by its ID or its
+            label. See `describe_realms()`.
 
-           Returns
-           -------
-           pandas.core.frame.DataFrame
-               A Pandas DataFrame containing the ID, label, and description
-               of each metric.
+        Returns
+        -------
+        pandas.core.frame.DataFrame
+            A Pandas DataFrame containing the ID, label, and description
+            of each metric.
 
-           Raises
-           ------
-           KeyError
-               If `realm` is not one of the values from `describe_realms()`.
-           RuntimeError
-               If this method is called outside the runtime context or if
-               there is an error requesting data from the warehouse.
-           TypeError
-               If `realm` is not a string.
+        Raises
+        ------
+        KeyError
+            If `realm` is not one of the values from `describe_realms()`.
+        RuntimeError
+            If this method is called outside the runtime context or if
+            there is an error requesting data from the warehouse.
+        TypeError
+            If `realm` is not a string.
         """
-        return self.__describe_metrics_or_dimensions(realm, 'metrics')
+        return self.__describe_metrics_or_dimensions(realm, "metrics")
 
     def describe_dimensions(self, realm):
         """Get a data frame describing the valid dimensions for the given
-           realm.
+        realm.
 
-           Parameters
-           ----------
-           realm : str
-               A realm in the data warehouse. Can be specified by its ID or its
-               label. See `describe_realms()`.
+        Parameters
+        ----------
+        realm : str
+            A realm in the data warehouse. Can be specified by its ID or its
+            label. See `describe_realms()`.
 
-           Returns
-           -------
-           pandas.core.frame.DataFrame
-               A Pandas DataFrame containing the ID, label, and description
-               of each dimension.
+        Returns
+        -------
+        pandas.core.frame.DataFrame
+            A Pandas DataFrame containing the ID, label, and description
+            of each dimension.
 
-           Raises
-           ------
-           KeyError
-               If `realm` is not one of the values from `describe_realms()`.
-           RuntimeError
-               If this method is called outside the runtime context or if
-               there is an error requesting data from the warehouse.
-           TypeError
-               If `realm` is not a string.
+        Raises
+        ------
+        KeyError
+            If `realm` is not one of the values from `describe_realms()`.
+        RuntimeError
+            If this method is called outside the runtime context or if
+            there is an error requesting data from the warehouse.
+        TypeError
+            If `realm` is not a string.
         """
-        return self.__describe_metrics_or_dimensions(realm, 'dimensions')
+        return self.__describe_metrics_or_dimensions(realm, "dimensions")
 
     def get_filter_values(self, realm, dimension):
         """Get a data frame containing the valid filter values for the given
-           dimension of the given realm.
+        dimension of the given realm.
 
-           Parameters
-           ----------
-           realm : str
-               A realm in the data warehouse. Can be specified by its ID or its
-               label. See `describe_realms()`.
-           dimension : str
-               A dimension of the given realm in the data warehouse. Can be
-               specified by its ID or its label. See `describe_dimensions()`.
+        Parameters
+        ----------
+        realm : str
+            A realm in the data warehouse. Can be specified by its ID or its
+            label. See `describe_realms()`.
+        dimension : str
+            A dimension of the given realm in the data warehouse. Can be
+            specified by its ID or its label. See `describe_dimensions()`.
 
-           Returns
-           -------
-           pandas.core.frame.DataFrame
-               A Pandas DataFrame containing the ID and label of each filter
-               value.
+        Returns
+        -------
+        pandas.core.frame.DataFrame
+            A Pandas DataFrame containing the ID and label of each filter
+            value.
 
-           Raises
-           ------
-           KeyError
-               If `realm` is not one of the values from `describe_realms()` or
-               `dimension` is not one of the IDs or labels from
-               `describe_dimensions()`.
-           RuntimeError
-               If this method is called outside the runtime context or if
-               there is an error requesting data from the warehouse.
-           TypeError
-               If `realm` or `dimension` are not strings.
+        Raises
+        ------
+        KeyError
+            If `realm` is not one of the values from `describe_realms()` or
+            `dimension` is not one of the IDs or labels from
+            `describe_dimensions()`.
+        RuntimeError
+            If this method is called outside the runtime context or if
+            there is an error requesting data from the warehouse.
+        TypeError
+            If `realm` or `dimension` are not strings.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
         realm_id = _validator._find_realm_id(self.__descriptors, realm)
@@ -340,130 +340,130 @@ class DataWarehouse:
             realm_id,
             dimension_id,
         )
-        data = [(datum['id'], datum['name']) for datum in response_data]
-        result = self.__get_data_frame(data, ('id', 'label'), 'id')
+        data = [(datum["id"], datum["name"]) for datum in response_data]
+        result = self.__get_data_frame(data, ("id", "label"), "id")
         return result
 
     def get_durations(self):
         """Get the valid values of the `duration` parameter of `get_data()` and
-           `get_raw_data()`.
+        `get_raw_data()`.
 
-           Returns
-           -------
-           tuple of str
+        Returns
+        -------
+        tuple of str
         """
         return _validator._get_durations()
 
     def get_aggregation_units(self):
         """Get the valid values for the `aggregation_unit` parameter of
-           `get_data()`.
+        `get_data()`.
 
-           Returns
-           -------
-           tuple of str
+        Returns
+        -------
+        tuple of str
         """
         return _validator._get_aggregation_units()
 
     def describe_raw_realms(self):
         """Get a data frame describing the valid raw data realms in the data
-           warehouse.
+        warehouse.
 
-           Returns
-           -------
-           pandas.core.frame.DataFrame
-               A Pandas DataFrame containing the ID and label of each raw data
-               realm.
+        Returns
+        -------
+        pandas.core.frame.DataFrame
+            A Pandas DataFrame containing the ID and label of each raw data
+            realm.
 
-           Raises
-           ------
-           RuntimeError
-               If this method is called outside the runtime context or if
-               there is an error requesting data from the warehouse.
+        Raises
+        ------
+        RuntimeError
+            If this method is called outside the runtime context or if
+            there is an error requesting data from the warehouse.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
         return self.__get_data_frame_from_descriptor(
             self.__descriptors._get_raw(),
-            ('id', 'label'),
-            'id',
+            ("id", "label"),
+            "id",
         )
 
     def describe_raw_fields(self, realm):
         """Get a data frame describing the raw data fields for the given realm.
 
-           Parameters
-           ----------
-           realm : str
-               A raw data realm in the data warehouse. Can be specified by its
-               ID or its label. See `describe_raw_realms()`.
+        Parameters
+        ----------
+        realm : str
+            A raw data realm in the data warehouse. Can be specified by its
+            ID or its label. See `describe_raw_realms()`.
 
-           Returns
-           -------
-           pandas.core.frame.DataFrame
-               A Pandas DataFrame containing the ID, label, and description
-               of each field.
+        Returns
+        -------
+        pandas.core.frame.DataFrame
+            A Pandas DataFrame containing the ID, label, and description
+            of each field.
 
-           Raises
-           ------
-           KeyError
-               If `realm` is not one of the values from
-               `describe_raw_realms()`.
-           RuntimeError
-               If this method is called outside the runtime context or if
-               there is an error requesting data from the warehouse.
-           TypeError
-               If `realm` is not a string.
+        Raises
+        ------
+        KeyError
+            If `realm` is not one of the values from
+            `describe_raw_realms()`.
+        RuntimeError
+            If this method is called outside the runtime context or if
+            there is an error requesting data from the warehouse.
+        TypeError
+            If `realm` is not a string.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
         realm_id = _validator._find_raw_realm_id(self.__descriptors, realm)
         return self.__get_data_frame_from_descriptor(
-            self.__descriptors._get_raw()[realm_id]['fields'],
-            ('id', 'label', 'description'),
-            'id',
+            self.__descriptors._get_raw()[realm_id]["fields"],
+            ("id", "label", "description"),
+            "id",
         )
 
     def get_resources(self, service_provider=None):
         """Get a dictionary containing information about the configured
-           resources in XDMoD.
+        resources in XDMoD.
 
-           Parameters
-           ----------
-           service_provider : str, optional
-               If present then the resource list is filtered only to contain
-               resources associated with the service provider.
+        Parameters
+        ----------
+        service_provider : str, optional
+            If present then the resource list is filtered only to contain
+            resources associated with the service provider.
 
-           Returns
-           -------
-           dict
-               A dictionary containing the information about the resources.
+        Returns
+        -------
+        dict
+            A dictionary containing the information about the resources.
 
-           Raises
-           ------
-           RuntimeError
-               If this method is called outside the runtime context.
-           TypeError
-               If `service_provider` is provided and is not a string.
+        Raises
+        ------
+        RuntimeError
+            If this method is called outside the runtime context.
+        TypeError
+            If `service_provider` is provided and is not a string.
         """
         _validator._assert_runtime_context(self.__in_runtime_context)
         return self.__http_requester._request_resources(service_provider)
 
     def _get_metric_label(self, realm, metric_id):
         d = self.__descriptors._get_aggregate()
-        return d[realm]['metrics'][metric_id]['label']
+        return d[realm]["metrics"][metric_id]["label"]
 
     def _get_dimension_label(self, realm, dimension_id):
-        if dimension_id == 'none':
+        if dimension_id == "none":
             return None
         d = self.__descriptors._get_aggregate()
-        return d[realm]['dimensions'][dimension_id]['label']
+        return d[realm]["dimensions"][dimension_id]["label"]
 
     def __get_data_frame(self, data, column_data, index=None):
         result = pd.DataFrame(
             data=data,
             columns=pd.Series(
                 data=column_data,
-                dtype='string',
+                dtype="string",
             ),
-            dtype='string',
+            dtype="string",
         ).fillna(value=np.nan)
         if index:
             result = result.set_index(index)
@@ -486,6 +486,6 @@ class DataWarehouse:
         realm_id = _validator._find_realm_id(self.__descriptors, realm)
         return self.__get_data_frame_from_descriptor(
             self.__descriptors._get_aggregate()[realm_id][m_or_d],
-            ('id', 'label', 'description'),
-            'id',
+            ("id", "label", "description"),
+            "id",
         )
