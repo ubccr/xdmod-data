@@ -10,16 +10,16 @@ for making Jupyter reports, and fixes a bug in retrieving raw data.
 It is compatible with Open XDMoD version 11.0.x.
 
 - Remove unnecessary request made when runtime context is entered
-  ([\#74](https://github.com/ubccr/xdmod-data/pull/74)).
+  ([\#55](https://github.com/ubccr/xdmod-data/pull/55)).
 - Remove Open XDMoD 10.5 support
-  ([\#75](https://github.com/ubccr/xdmod-data/pull/75)).
+  ([\#68](https://github.com/ubccr/xdmod-data/pull/68)).
 - Raise runtime error if raw data stream is closed unexpectedly.
-  ([\#80](https://github.com/ubccr/xdmod-data/pull/80)).
+  ([\#73](https://github.com/ubccr/xdmod-data/pull/73)).
 - Add `get_resources` method to the API
-  ([\#83](https://github.com/ubccr/xdmod-data/pull/83)).
+  ([\#81](https://github.com/ubccr/xdmod-data/pull/81)).
 - Add support for running in an XDMoD-hosted JupyterHub
-  ([\#84](https://github.com/ubccr/xdmod-data/pull/84)).
-- Add report module ([\#86](https://github.com/ubccr/xdmod-data/pull/86)).
+  ([\#76](https://github.com/ubccr/xdmod-data/pull/76)).
+- Add report module ([\#85](https://github.com/ubccr/xdmod-data/pull/85)).
 
 ## v1.0.3 (2025-01-30)
 
@@ -29,16 +29,15 @@ template.
 It is compatible with Open XDMoD versions 11.0.1, 11.0.0, and 10.5.x.
 
 - Implement 100% test coverage
-  ([\#27](https://github.com/ubccr/xdmod-data/pull/27)).
-- Update Flake8 rules ([\#28](https://github.com/ubccr/xdmod-data/pull/28)).
+  ([\#45](https://github.com/ubccr/xdmod-data/pull/45)).
+- Update Flake8 rules ([\#46](https://github.com/ubccr/xdmod-data/pull/46)).
 - Change to using CircleCI instead of GitHub Actions for continuous integration
-  ([\#48](https://github.com/ubccr/xdmod-data/pull/48),
-  [\#49](https://github.com/ubccr/xdmod-data/pull/49),
-  [\#51](https://github.com/ubccr/xdmod-data/pull/51),
-  [\#52](https://github.com/ubccr/xdmod-data/pull/52),
-  [\#59](https://github.com/ubccr/xdmod-data/pull/59)).
+  ([\#50](https://github.com/ubccr/xdmod-data/pull/50),
+  [\#53](https://github.com/ubccr/xdmod-data/pull/53),
+  [\#56](https://github.com/ubccr/xdmod-data/pull/56),
+  [\#58](https://github.com/ubccr/xdmod-data/pull/58)).
 - Fix Plotly template ValueError
-  ([\#61](https://github.com/ubccr/xdmod-data/pull/61)).
+  ([\#60](https://github.com/ubccr/xdmod-data/pull/60)).
 
 ## v1.0.2 (2024-10-31)
 
@@ -50,7 +49,7 @@ It is compatible with Open XDMoD versions 11.0.1, 11.0.0, and 10.5.x.
 - Document Open XDMoD compatibility in changelog
   ([\#31](https://github.com/ubccr/xdmod-data/pull/31)).
 - Fix IOPub error when showing progress with `get_raw_data()`
-  ([\#39](https://github.com/ubccr/xdmod-data/pull/39)).
+  ([\#40](https://github.com/ubccr/xdmod-data/pull/40)).
 
 ## v1.0.1 (2024-09-27)
 
