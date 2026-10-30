@@ -1,0 +1,548 @@
+from dotenv import load_dotenv
+import os
+import pandas
+from pathlib import Path
+import pytest
+import re
+import xdmod_data._error_messages as _error_messages
+import xdmod_data._validator as _validator
+from xdmod_data.warehouse import DataWarehouse
+
+VALID_XDMOD_HOST = os.environ["XDMOD_HOST"]
+XDMOD_CONTAINER = os.environ["XDMOD_CONTAINER"]
+TOKEN_PATH = os.environ["TOKEN_PATH"]
+INVALID_STR = "asdlkfjsdlkfisdjkfjd"
+METHOD_PARAMS = {
+    "get_data": (
+        "duration",
+        "realm",
+        "metric",
+        "dimension",
+        "filters",
+        "dataset_type",
+        "aggregation_unit",
+    ),
+    "get_raw_data": (
+        "duration",
+        "realm",
+        "filters",
+        "fields",
+        "show_progress",
+    ),
+    "describe_realms": (),
+    "describe_metrics": ("realm",),
+    "describe_dimensions": ("realm",),
+    "get_filter_values": ("realm", "dimension"),
+    "describe_raw_realms": (),
+    "describe_raw_fields": ("realm",),
+    "get_resources": ("service_provider",),
+}
+VALID_DATE = "2016-12-25"
+VALID_DIMENSION = "Resource"
+VALID_VALUES = {
+    "duration": "Yesterday",
+    "realm": "Jobs",
+    "metric": "CPU Hours: Total",
+    "dimension": VALID_DIMENSION,
+    "filters": {VALID_DIMENSION: "phillips"},
+    "dataset_type": "timeseries",
+    "aggregation_unit": "Auto",
+    "fields": ["Nodes"],
+    "show_progress": False,
+    "service_provider": "screw",
+}
+
+
+def __get_key_error_test_values_and_matches():
+    result = {}
+    for param in [
+        "duration",
+        "realm",
+        "metric",
+        "dimension",
+        "dataset_type",
+        "aggregation_unit",
+        "filters:key",
+        "filters:value",
+        "fields",
+        "field",
+    ]:
+        param_name = param
+        value = INVALID_STR
+        value_for_message = value
+        realm = None
+        dimension = None
+        valid_values = None
+        if param == "duration":
+            valid_values = DataWarehouse().get_durations()
+        if param == "dataset_type":
+            valid_values = ("timeseries", "aggregate")
+        if param == "aggregation_unit":
+            valid_values = DataWarehouse().get_aggregation_units()
+        if param == "filters:key":
+            param_name = "dimension"
+            value = {INVALID_STR: INVALID_STR}
+            value_for_message = INVALID_STR
+        if param == "filters:value":
+            param_name = "filter value"
+            value = {VALID_VALUES["dimension"]: INVALID_STR}
+            value_for_message = INVALID_STR
+            dimension = VALID_VALUES["dimension"]
+        if param == "fields":
+            param_name = "field"
+            value = [INVALID_STR]
+        if param in ["metric", "dimension", "filters:key", "filters:value", "fields"]:
+            realm = VALID_VALUES["realm"]
+        result[param] = (
+            value,
+            _error_messages.VALUE_NOT_FOUND(
+                name=param_name,
+                value=value_for_message,
+                realm=realm,
+                dimension=dimension,
+                valid_values=valid_values,
+            ),
+        )
+    return result
+
+
+KEY_ERROR_TEST_VALUES_AND_MATCHES = __get_key_error_test_values_and_matches()
+
+key_error_test_ids = []
+duration_test_ids = []
+start_end_test_ids = []
+type_error_test_ids = []
+
+default_valid_params = {}
+key_error_test_params = []
+date_malformed_test_params = []
+type_error_test_params = []
+value_error_test_methods = []
+
+for method in METHOD_PARAMS:
+    default_valid_params[method] = {}
+    for param in METHOD_PARAMS[method]:
+        default_valid_params[method][param] = VALID_VALUES[param]
+        type_error_test_ids += [method + ":" + param]
+        type_error_test_params += [(method, param, {param: 2})]
+        if param in KEY_ERROR_TEST_VALUES_AND_MATCHES:
+            key_error_test_ids += [method + ":" + param]
+            value, match = KEY_ERROR_TEST_VALUES_AND_MATCHES[param]
+            key_error_test_params += [(method, {param: value}, match)]
+        if param == "duration":
+            duration_test_ids += [method]
+            for date_param in ("start_date", "end_date"):
+                start_end_test_ids += [f"{method}:{date_param}"]
+                if method == "get_data":
+                    error_message = (
+                        f"{date_param} param is not in the correct format of Y-m-d"
+                    )
+                else:
+                    error_message = (
+                        f"Invalid value for {date_param}. Must be a(n) ISO 8601 Date"
+                    )
+                date_malformed_test_params += [
+                    (
+                        method,
+                        date_param,
+                        {
+                            "duration": (
+                                (INVALID_STR, VALID_DATE)
+                                if date_param == "start_date"
+                                else (VALID_DATE, INVALID_STR)
+                            )
+                        },
+                        f"Error 400: {error_message}. {_error_messages.JUPYTERHUB}",
+                    ),
+                ]
+            value_error_test_methods += [method]
+    if "filters" in METHOD_PARAMS[method]:
+        for param in ("filters:key", "filters:value"):
+            key_error_test_ids += [method + ":" + param]
+            value, match = KEY_ERROR_TEST_VALUES_AND_MATCHES[param]
+            key_error_test_params += [(method, {"filters": value}, match)]
+    if "fields" in METHOD_PARAMS[method]:
+        type_error_test_params += [(method, "fields", {"fields": [2]})]
+        type_error_test_ids += [f"{method}:fields"]
+
+
+load_dotenv(Path(TOKEN_PATH).expanduser(), override=True)
+
+
+@pytest.fixture(scope="module")
+def dw_methods(request):
+    xdmod_host = VALID_XDMOD_HOST
+    if hasattr(request, "param"):
+        xdmod_host = request.param
+    with DataWarehouse(xdmod_host) as dw:
+        yield __get_dw_methods(dw)
+
+
+@pytest.fixture(scope="module")
+def dw_methods_outside_runtime_context():
+    dw = DataWarehouse()
+    return __get_dw_methods(dw)
+
+
+def __get_dw_methods(dw):
+    return {method: getattr(dw, method) for method in METHOD_PARAMS}
+
+
+def __run_method(
+    dw_methods,
+    method,
+    additional_params={},
+    testing_exception=False,
+):
+    params = {**default_valid_params[method], **additional_params}
+    # get_resources is not supported in XDMoD < 11.0.2.
+    if (
+        method == "get_resources"
+        and XDMOD_CONTAINER == "v11-0-0-1-0"
+        and not testing_exception
+    ):
+        with pytest.raises(
+            RuntimeError,
+            match=re.escape(
+                _error_messages.GET_RESOURCES_NOT_SUPPORTED(VALID_XDMOD_HOST)
+            ),
+        ):
+            dw_methods[method](**params)
+    else:
+        return dw_methods[method](**params)
+
+
+def __test_exception(dw_methods, method, additional_params, error, match):
+    with pytest.raises(error) as excinfo:
+        __run_method(
+            dw_methods,
+            method,
+            additional_params,
+            testing_exception=True,
+        )
+    assert excinfo.value.args[0] == match
+
+
+@pytest.mark.parametrize(
+    "method, params, match",
+    key_error_test_params,
+    ids=key_error_test_ids,
+)
+def test_KeyError(dw_methods, method, params, match):
+    __test_exception(dw_methods, method, params, KeyError, match)
+
+
+@pytest.mark.parametrize(
+    "method",
+    list(METHOD_PARAMS.keys()),
+)
+def test_RuntimeError_outside_context(
+    dw_methods_outside_runtime_context,
+    method,
+):
+    __test_exception(
+        dw_methods_outside_runtime_context,
+        method,
+        {},
+        RuntimeError,
+        _error_messages.OUTSIDE_RUNTIME_CONTEXT,
+    )
+
+
+@pytest.mark.parametrize(
+    "method, date_param, params, match",
+    date_malformed_test_params,
+    ids=start_end_test_ids,
+)
+def test_RuntimeError_date_malformed(dw_methods, method, date_param, params, match):
+    __test_exception(
+        dw_methods,
+        method,
+        params,
+        RuntimeError,
+        match,
+    )
+
+
+@pytest.mark.parametrize(
+    "method, param, value",
+    type_error_test_params,
+    ids=type_error_test_ids,
+)
+def test_TypeError(dw_methods, method, param, value):
+    __test_exception(
+        dw_methods,
+        method,
+        value,
+        TypeError,
+        _error_messages.TYPE_ERROR(param, _validator._PARAM_TYPES[param]),
+    )
+
+
+@pytest.mark.parametrize(
+    "method",
+    value_error_test_methods,
+    ids=duration_test_ids,
+)
+def test_ValueError_duration(dw_methods, method):
+    __test_exception(
+        dw_methods,
+        method,
+        {"duration": ("1", "2", "3")},
+        ValueError,
+        _error_messages.TYPE_ERROR("duration", _validator._PARAM_TYPES["duration"]),
+    )
+
+
+def __test_DataFrame_return_value(
+    dw_methods,
+    method,
+    additional_params,
+    dtype,
+    columns_name,
+    columns_data,
+    columns_data_subset,
+    index_type,
+    index_dtype,
+    index_name,
+    index_size,
+):
+    df = __run_method(dw_methods, method, additional_params)
+    assert isinstance(df, pandas.core.frame.DataFrame)
+    for actual_dtype in df.dtypes:
+        assert actual_dtype == dtype
+    assert isinstance(df.columns, pandas.core.indexes.base.Index)
+    assert df.columns.dtype == "string"
+    assert df.columns.name == columns_name
+    if columns_data_subset:
+        for column in df.columns.to_list():
+            assert column in columns_data
+    else:
+        assert df.columns.to_list() == columns_data
+    assert isinstance(df.index, index_type)
+    assert df.index.dtype == index_dtype
+    assert df.index.name == index_name
+    if index_size is not None:
+        assert df.index.size == index_size
+
+
+get_data_return_value_test_params = {
+    "duration": ("2016-12-22", "2017-01-31"),
+    "realm": "Jobs",
+    "metric": "Number of Users: Active",
+    "dimension": "None",
+    "filters": {},
+    "dataset_type": "timeseries",
+    "aggregation_unit": "Day",
+}
+
+
+@pytest.mark.parametrize(
+    "additional_params, columns_name, index_size",
+    [
+        (
+            {},
+            "Metric",
+            11,
+        ),
+        (
+            {"filters": {"Resource": "robertson"}},
+            "Metric",
+            6,
+        ),
+        (
+            {"dimension": "Resource"},
+            "Resource",
+            11,
+        ),
+        (
+            {
+                "dimension": "Resource",
+                "filters": {"Resource": "robertson"},
+            },
+            "Resource",
+            6,
+        ),
+    ],
+    ids=(
+        "no_dimension,not_empty",
+        "no_dimension,empty",
+        "dimension,not_empty",
+        "dimension,empty",
+    ),
+)
+def test_get_data_timeseries_return_value(
+    dw_methods,
+    additional_params,
+    columns_name,
+    index_size,
+):
+    params = {**get_data_return_value_test_params, **additional_params}
+    if columns_name == "Metric":
+        columns_data = [get_data_return_value_test_params["metric"]]
+        columns_data_subset = False
+    else:
+        columns_data = dw_methods["get_filter_values"](
+            params["realm"],
+            params["dimension"],
+        )["label"].to_list()
+        columns_data_subset = True
+    __test_DataFrame_return_value(
+        dw_methods,
+        method="get_data",
+        additional_params=params,
+        dtype="Float64",
+        columns_name=columns_name,
+        columns_data=columns_data,
+        columns_data_subset=columns_data_subset,
+        index_type=pandas.core.indexes.datetimes.DatetimeIndex,
+        index_dtype="datetime64[ns]",
+        index_name="Time",
+        index_size=index_size,
+    )
+
+
+get_data_aggregate_return_value_test_params = {
+    **get_data_return_value_test_params,
+    **{"dataset_type": "aggregate"},
+}
+
+
+@pytest.mark.parametrize(
+    "additional_params, index_name, index_size",
+    [
+        (
+            {},
+            None,
+            1,
+        ),
+        (
+            {"filters": {"Resource": "robertson"}},
+            None,
+            1,
+        ),
+        (
+            {"dimension": "Resource"},
+            "Resource",
+            5,
+        ),
+        (
+            {
+                "dimension": "Resource",
+                "filters": {"Resource": "robertson"},
+            },
+            "Resource",
+            1,
+        ),
+    ],
+    ids=(
+        "no_dimension,not_empty",
+        "no_dimension,empty",
+        "dimension,not_empty",
+        "dimension,empty",
+    ),
+)
+def test_get_data_aggregate_return_value(
+    dw_methods,
+    additional_params,
+    index_name,
+    index_size,
+):
+    params = {
+        **get_data_aggregate_return_value_test_params,
+        **additional_params,
+    }
+    series = __run_method(dw_methods, "get_data", params)
+    assert isinstance(series, pandas.core.series.Series)
+    assert series.dtype == "Float64"
+    if index_name is None:
+        assert series.name is None
+        assert series.index.to_list() == [params["metric"]]
+    else:
+        assert series.name == params["metric"]
+        dimension_values = dw_methods["get_filter_values"](
+            params["realm"],
+            params["dimension"],
+        )["label"].to_list()
+        assert series.index.to_list().sort() == dimension_values.sort()
+    assert isinstance(series.index, pandas.core.indexes.base.Index)
+    assert series.index.dtype == "string"
+    assert series.index.name == index_name
+    assert series.index.size == index_size
+
+
+get_descriptors_return_value_test_columns_data = {
+    "describe_realms": ["label"],
+    "describe_metrics": ["label", "description"],
+    "describe_dimensions": ["label", "description"],
+    "get_filter_values": ["label"],
+    "describe_raw_realms": ["label"],
+    "describe_raw_fields": ["label", "description"],
+}
+get_descriptors_return_value_test_params = [
+    (method, columns_data)
+    for method, columns_data in get_descriptors_return_value_test_columns_data.items()
+]
+
+
+@pytest.mark.parametrize(
+    "method, columns_data",
+    get_descriptors_return_value_test_params,
+    ids=get_descriptors_return_value_test_columns_data.keys(),
+)
+def test_get_descriptors_return_value(dw_methods, method, columns_data):
+    __test_DataFrame_return_value(
+        dw_methods,
+        method,
+        additional_params={},
+        dtype="string",
+        columns_name=None,
+        columns_data=columns_data,
+        columns_data_subset=False,
+        index_type=pandas.core.indexes.base.Index,
+        index_dtype="string",
+        index_name="id",
+        index_size=None,
+    )
+
+
+@pytest.mark.parametrize(
+    "method, param, value1, value2",
+    [
+        ("get_data", "duration", "Quarter to date", "  quaRterto dAte "),
+        ("get_data", "aggregation_unit", "Month", " m O ntH  "),
+    ],
+    ids=("get_data:duration", "get_data:aggregation_unit"),
+)
+def test_case_insensitive(dw_methods, method, param, value1, value2):
+    data1 = __run_method(dw_methods, method, {param: value1})
+    data2 = __run_method(dw_methods, method, {param: value2})
+    assert data1.equals(data2)
+
+
+@pytest.mark.parametrize(
+    "dw_methods,method",
+    [
+        (
+            VALID_XDMOD_HOST + "/",
+            method,
+        )
+        for method in list(METHOD_PARAMS.keys())
+    ],
+    indirect=["dw_methods"],
+    ids=[method for method in list(METHOD_PARAMS.keys())],
+)
+def test_trailing_slashes(dw_methods, method):
+    __run_method(dw_methods, method)
+
+
+def test_get_resources_invalid_service_provider(dw_methods):
+    print(f"XDMOD_API_TOKEN {os.environ['XDMOD_API_TOKEN']}")
+    result = __run_method(
+        dw_methods,
+        "get_resources",
+        {"service_provider": INVALID_STR},
+    )
+    # get_resources is not supported in XDMoD < 11.0.2.
+    if XDMOD_CONTAINER != "v11-0-0-1-0":
+        assert result == []

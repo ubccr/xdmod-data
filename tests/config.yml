@@ -1,0 +1,7 @@
+# Define values for testing.
+
+max_python_version: 3.14
+xdmod_images:
+  - xdmod-data-main
+  - xdmod-data-xdmod11-0
+  - xdmod-data-v11-0-0-1-0
